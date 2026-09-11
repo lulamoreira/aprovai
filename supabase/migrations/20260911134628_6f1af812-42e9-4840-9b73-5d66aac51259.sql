@@ -1,0 +1,27 @@
+
+REVOKE EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.is_interno() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.is_interno() TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.papel_atual() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.papel_atual() TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.nome_ator() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.nome_ator() TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.ensure_profile(text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.ensure_profile(text) TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.subir_versao(uuid,text,text,int,int,text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.subir_versao(uuid,text,text,int,int,text) TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.comentar_interno(uuid,text,boolean,numeric,numeric) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.comentar_interno(uuid,text,boolean,numeric,numeric) TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.enviar_peca(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.enviar_peca(uuid) TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.marcar_visto(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.marcar_visto(uuid) TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.recolher_envio(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.recolher_envio(uuid) TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.autorizar_edicao_cliente(uuid,text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.autorizar_edicao_cliente(uuid,text) TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.revogar_autorizacao(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.revogar_autorizacao(uuid) TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.acesso_por_token(text) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.touch_updated_at() FROM PUBLIC, anon, authenticated;

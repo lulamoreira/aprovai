@@ -223,8 +223,8 @@ function TelaPeca() {
         p_peca_id: pecaId,
         p_texto: texto.trim(),
         p_visivel_cliente: visivelCliente,
-        p_pin_x: pin?.x ?? null,
-        p_pin_y: pin?.y ?? null,
+        p_pin_x: pin?.x,
+        p_pin_y: pin?.y,
       });
       if (error) throw error;
     },
@@ -291,9 +291,6 @@ function TelaPeca() {
         p_peca_id: pecaId,
         p_imagem_url: caminho,
         p_imagem_path: caminho,
-        p_largura: null,
-        p_altura: null,
-        p_observacao: null,
       });
       if (error) throw error;
       toast.success("Nova versão publicada.");

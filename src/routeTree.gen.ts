@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedCampanhasCampanhaIdRouteImport } from './routes/_authenticated/campanhas.$campanhaId'
+import { Route as AuthenticatedPecasPecaIdRouteImport } from './routes/_authenticated/pecas.$pecaId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,18 +41,26 @@ const AuthenticatedCampanhasCampanhaIdRoute =
     path: '/campanhas/$campanhaId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPecasPecaIdRoute =
+  AuthenticatedPecasPecaIdRouteImport.update({
+    id: '/pecas/$pecaId',
+    path: '/pecas/$pecaId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/campanhas/$campanhaId': typeof AuthenticatedCampanhasCampanhaIdRoute
+  '/pecas/$pecaId': typeof AuthenticatedPecasPecaIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/campanhas/$campanhaId': typeof AuthenticatedCampanhasCampanhaIdRoute
+  '/pecas/$pecaId': typeof AuthenticatedPecasPecaIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -60,12 +69,14 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/campanhas/$campanhaId': typeof AuthenticatedCampanhasCampanhaIdRoute
+  '/_authenticated/pecas/$pecaId': typeof AuthenticatedPecasPecaIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/painel' | '/campanhas/$campanhaId'
+  fullPaths:
+    '/' | '/auth' | '/painel' | '/campanhas/$campanhaId' | '/pecas/$pecaId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/painel' | '/campanhas/$campanhaId'
+  to: '/' | '/auth' | '/painel' | '/campanhas/$campanhaId' | '/pecas/$pecaId'
   id:
     | '__root__'
     | '/'
@@ -73,6 +84,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/painel'
     | '/_authenticated/campanhas/$campanhaId'
+    | '/_authenticated/pecas/$pecaId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -118,17 +130,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCampanhasCampanhaIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/pecas/$pecaId': {
+      id: '/_authenticated/pecas/$pecaId'
+      path: '/pecas/$pecaId'
+      fullPath: '/pecas/$pecaId'
+      preLoaderRoute: typeof AuthenticatedPecasPecaIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedCampanhasCampanhaIdRoute: typeof AuthenticatedCampanhasCampanhaIdRoute
+  AuthenticatedPecasPecaIdRoute: typeof AuthenticatedPecasPecaIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedCampanhasCampanhaIdRoute: AuthenticatedCampanhasCampanhaIdRoute,
+  AuthenticatedPecasPecaIdRoute: AuthenticatedPecasPecaIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

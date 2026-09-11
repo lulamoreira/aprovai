@@ -42,9 +42,11 @@
           "openWorldHint": false
         },
         "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
           "properties": {
             "status": {
+              "description": "Filtra pelo status atual da peça.",
               "type": "string",
               "enum": [
                 "criacao_ajustando",
@@ -53,20 +55,19 @@
                 "retorno_atendimento",
                 "aprovada",
                 "arquivada"
-              ],
-              "description": "Filtra pelo status atual da peça."
+              ]
             },
             "campanha": {
-              "type": "string",
-              "description": "Texto contido no nome da campanha."
+              "description": "Texto contido no nome da campanha.",
+              "type": "string"
             },
             "limite": {
+              "description": "Máximo de peças a retornar (padrão 50).",
               "type": "integer",
-              "description": "Máximo de peças a retornar (padrão 50)."
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
             }
-          },
-          "additionalProperties": false,
-          "$schema": "http://json-schema.org/draft-07/schema#"
+          }
         },
         "outputSchema": null
       },
@@ -80,6 +81,7 @@
           "openWorldHint": false
         },
         "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
           "properties": {
             "peca_id": {
@@ -89,9 +91,7 @@
           },
           "required": [
             "peca_id"
-          ],
-          "additionalProperties": false,
-          "$schema": "http://json-schema.org/draft-07/schema#"
+          ]
         },
         "outputSchema": null
       },
@@ -105,6 +105,7 @@
           "openWorldHint": false
         },
         "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
           "properties": {
             "peca_id": {
@@ -116,16 +117,14 @@
               "description": "Conteúdo do comentário."
             },
             "visivel_para_cliente": {
-              "type": "boolean",
-              "description": "Quando verdadeiro, o cliente também verá este comentário."
+              "description": "Quando verdadeiro, o cliente também verá este comentário.",
+              "type": "boolean"
             }
           },
           "required": [
             "peca_id",
             "texto"
-          ],
-          "additionalProperties": false,
-          "$schema": "http://json-schema.org/draft-07/schema#"
+          ]
         },
         "outputSchema": null
       },
@@ -139,6 +138,7 @@
           "openWorldHint": false
         },
         "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
           "properties": {
             "peca_id": {
@@ -148,9 +148,7 @@
           },
           "required": [
             "peca_id"
-          ],
-          "additionalProperties": false,
-          "$schema": "http://json-schema.org/draft-07/schema#"
+          ]
         },
         "outputSchema": null
       }

@@ -27,7 +27,10 @@ export const Route = createFileRoute("/aprovar/$token")({
       { title: "Aprovação de peça — Aprova" },
       { name: "description", content: "Avalie a arte, comente e aprove ou devolva com pedidos." },
       { property: "og:title", content: "Aprovação de peça — Aprova" },
-      { property: "og:description", content: "Avalie a arte, comente e aprove ou devolva com pedidos." },
+      {
+        property: "og:description",
+        content: "Avalie a arte, comente e aprove ou devolva com pedidos.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -36,7 +39,13 @@ export const Route = createFileRoute("/aprovar/$token")({
 
 interface RespostaCliente {
   contato: { id: string; nome: string | null };
-  peca: { id: string; nome: string; tamanho: string | null; status: PieceStatus; versao_atual: number };
+  peca: {
+    id: string;
+    nome: string;
+    tamanho: string | null;
+    status: PieceStatus;
+    versao_atual: number;
+  };
   versoes: { id: string; numero: number; imagem_path: string | null }[];
   comentarios: {
     id: string;
@@ -193,7 +202,11 @@ function TelaCliente() {
             }}
           >
             {urlImagem ? (
-              <img src={urlImagem} alt={`Arte da peça ${data.peca.nome}`} className="w-full object-contain" />
+              <img
+                src={urlImagem}
+                alt={`Arte da peça ${data.peca.nome}`}
+                className="w-full object-contain"
+              />
             ) : (
               <p className="p-10 text-sm text-muted-foreground">Arte indisponível.</p>
             )}
@@ -255,7 +268,10 @@ function TelaCliente() {
               />
               <div className="flex items-center justify-between">
                 {pin ? (
-                  <button onClick={() => setPin(null)} className="text-xs text-muted-foreground hover:underline">
+                  <button
+                    onClick={() => setPin(null)}
+                    className="text-xs text-muted-foreground hover:underline"
+                  >
                     remover marcação
                   </button>
                 ) : (

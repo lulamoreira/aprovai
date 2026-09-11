@@ -13,7 +13,10 @@ export const Route = createFileRoute("/_authenticated/painel")({
       { title: "Painel de campanhas — Aprova" },
       { name: "description", content: "Campanhas e peças em aprovação, organizadas por cliente." },
       { property: "og:title", content: "Painel de campanhas — Aprova" },
-      { property: "og:description", content: "Campanhas e peças em aprovação, organizadas por cliente." },
+      {
+        property: "og:description",
+        content: "Campanhas e peças em aprovação, organizadas por cliente.",
+      },
     ],
   }),
   component: Painel,
@@ -67,7 +70,11 @@ function Painel() {
   });
 
   const statusDoPapel: PieceStatus | null =
-    papel === "criacao" ? "criacao_ajustando" : papel === "atendimento" ? "aguardando_atendimento" : null;
+    papel === "criacao"
+      ? "criacao_ajustando"
+      : papel === "atendimento"
+        ? "aguardando_atendimento"
+        : null;
 
   const aguardandoVoce = (data?.pecas ?? []).filter(
     (p) =>
@@ -155,7 +162,9 @@ function Painel() {
                       <span className="flex size-10 items-center justify-center rounded-2xl bg-accent">
                         <FolderOpen className="size-5 text-accent-foreground" />
                       </span>
-                      <h3 className="mt-3 font-semibold group-hover:text-primary">{campanha.nome}</h3>
+                      <h3 className="mt-3 font-semibold group-hover:text-primary">
+                        {campanha.nome}
+                      </h3>
                       {campanha.descricao && (
                         <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
                           {campanha.descricao}

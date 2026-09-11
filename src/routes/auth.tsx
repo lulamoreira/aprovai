@@ -1,0 +1,138 @@
+import { useEffect, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Sparkles } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+export const Route = createFileRoute("/auth")({
+  ssr: false,
+  head: () => ({
+    meta: [
+      { title: "Entrar no Aprova" },
+      { name: "description", content: "Acesso da equipe interna ao Aprova." },
+      { property: "og:title", content: "Entrar no Aprova" },
+      { property: "og:description", content: "Acesso da equipe interna ao Aprova." },
+    ],
+  }),
+  component: Autenticacao,
+});
+
+function Autenticacao() {
+  const [modo, setModo] = useState<"entrar" | "criar">("entrar");
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const { session } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (session) void navigate({ to: "/painel", replace: true });
+  }, [session, navigate]);
+
+  async function enviar(e: React.FormEvent) {
+    e.preventDefault();
+    setEnviando(true);
+    try {
+      if (modo === "entrar") {
+        const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
+        if (error) throw error;
+        void navigate({ to: "/painel", replace: true });
+      } else {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password: senha,
+          options: { emailRedirectTo: window.location.origin, data: { nome } },
+        });
+        if (error) throw error;
+        if (!data.session) {
+          toast.success("Conta criada! Confirme o e-mail que enviamos para entrar.");
+          setModo("entrar");
+        }
+      }
+    } catch (erro) {
+      toast.error(erro instanceof Error ? erro.message : "Não foi possível continuar.");
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
+      <div className="w-full max-w-md rounded-3xl border bg-card p-8 shadow-lift">
+        <div className="mb-6 flex items-center gap-2">
+          <span className="gradient-brand flex size-10 items-center justify-center rounded-2xl">
+            <Sparkles className="size-5 text-primary-foreground" />
+          </span>
+          <span className="text-xl font-bold tracking-tight">Aprova</span>
+        </div>
+        <h1 className="text-2xl font-bold">
+          {modo === "entrar" ? "Entrar na sua conta" : "Criar acesso interno"}
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {modo === "entrar"
+            ? "Acesso da equipe de criação e atendimento."
+            : "Depois do cadastro, um administrador define seu papel."}
+        </p>
+
+        <form onSubmit={enviar} className="mt-6 space-y-4">
+          {modo === "criar" && (
+            <div className="space-y-2">
+              <Label htmlFor="nome">Nome</Label>
+              <Input
+                id="nome"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                placeholder="Seu nome"
+                className="rounded-2xl"
+                required
+              />
+            </div>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="email">E-mail</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="voce@agencia.com"
+              className="rounded-2xl"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="senha">Senha</Label>
+            <Input
+              id="senha"
+              type="password"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              minLength={6}
+              className="rounded-2xl"
+              required
+            />
+          </div>
+          <Button
+            type="submit"
+            disabled={enviando}
+            className="gradient-brand w-full rounded-2xl text-primary-foreground hover:opacity-95"
+          >
+            {enviando ? "Aguarde..." : modo === "entrar" ? "Entrar" : "Criar conta"}
+          </Button>
+        </form>
+
+        <button
+          onClick={() => setModo(modo === "entrar" ? "criar" : "entrar")}
+          className="mt-5 w-full text-center text-sm text-muted-foreground hover:text-foreground"
+        >
+          {modo === "entrar" ? "Não tenho acesso ainda" : "Já tenho conta"}
+        </button>
+      </div>
+    </div>
+  );
+}

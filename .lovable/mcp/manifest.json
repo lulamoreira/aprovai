@@ -1,0 +1,157 @@
+{
+  "version": 1,
+  "sdk_version": "2.0.4",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://whzoqeqlxthjtbbrgffh.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "aproveai-assistant",
+      "version": "0.1.0",
+      "title": "AproveAI Assistant"
+    },
+    "tools": [
+      {
+        "name": "minhas_pendencias",
+        "title": "Minhas pendências",
+        "description": "Mostra as notificações não lidas do usuário e as peças que estão aguardando uma ação dele agora.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "listar_pecas",
+        "title": "Listar peças",
+        "description": "Lista peças de aprovação visíveis para o usuário, com cliente, campanha, status e versão atual. Filtra por status ou por nome da campanha.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "status": {
+              "description": "Filtra pelo status atual da peça.",
+              "type": "string",
+              "enum": [
+                "criacao_ajustando",
+                "aguardando_atendimento",
+                "aguardando_cliente",
+                "retorno_atendimento",
+                "aprovada",
+                "arquivada"
+              ]
+            },
+            "campanha": {
+              "description": "Texto contido no nome da campanha.",
+              "type": "string"
+            },
+            "limite": {
+              "description": "Máximo de peças a retornar (padrão 50).",
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "detalhar_peca",
+        "title": "Detalhar peça",
+        "description": "Retorna os dados de uma peça: status, versões, comentários da versão atual e a linha do tempo de auditoria.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "peca_id": {
+              "type": "string",
+              "description": "Identificador da peça."
+            }
+          },
+          "required": [
+            "peca_id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "comentar_peca",
+        "title": "Comentar em uma peça",
+        "description": "Adiciona um comentário interno na versão atual da peça. Opcionalmente marca o comentário como visível para o cliente.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "peca_id": {
+              "type": "string",
+              "description": "Identificador da peça."
+            },
+            "texto": {
+              "type": "string",
+              "description": "Conteúdo do comentário."
+            },
+            "visivel_para_cliente": {
+              "description": "Quando verdadeiro, o cliente também verá este comentário.",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "peca_id",
+            "texto"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "enviar_peca",
+        "title": "Enviar peça para a próxima etapa",
+        "description": "Passa o bastão da peça para a próxima etapa do fluxo (Criação para Atendimento, Atendimento para Cliente, ou de volta para Correção). Trava os comentários enviados.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "peca_id": {
+              "type": "string",
+              "description": "Identificador da peça a enviar."
+            }
+          },
+          "required": [
+            "peca_id"
+          ]
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

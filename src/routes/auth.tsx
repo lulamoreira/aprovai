@@ -8,8 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+function destinoSeguro(valor: unknown): string {
+  return typeof valor === "string" && valor.startsWith("/") && !valor.startsWith("//")
+    ? valor
+    : "/painel";
+}
+
 export const Route = createFileRoute("/auth")({
   ssr: false,
+  validateSearch: (s: Record<string, unknown>): { next?: string } =>
+    typeof s["next"] === "string" ? { next: s["next"] } : {},
   head: () => ({
     meta: [
       { title: "Entrar no Aprova" },
@@ -29,10 +37,12 @@ function Autenticacao() {
   const [enviando, setEnviando] = useState(false);
   const { session } = useAuth();
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
+  const destino = destinoSeguro(next);
 
   useEffect(() => {
-    if (session) void navigate({ to: "/painel", replace: true });
-  }, [session, navigate]);
+    if (session) window.location.replace(destino);
+  }, [session, destino]);
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
@@ -41,12 +51,12 @@ function Autenticacao() {
       if (modo === "entrar") {
         const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
         if (error) throw error;
-        void navigate({ to: "/painel", replace: true });
+        window.location.replace(destino);
       } else {
         const { data, error } = await supabase.auth.signUp({
           email,
           password: senha,
-          options: { emailRedirectTo: window.location.origin, data: { nome } },
+          options: { emailRedirectTo: window.location.origin + destino, data: { nome } },
         });
         if (error) throw error;
         if (!data.session) {

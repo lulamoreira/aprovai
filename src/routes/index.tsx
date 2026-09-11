@@ -15,7 +15,8 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Aprova — aprovação de peças de campanha" },
       {
         property: "og:description",
-        content: "Fluxo de aprovação de peças com trava por etapa, comentários com pin e histórico.",
+        content:
+          "Fluxo de aprovação de peças com trava por etapa, comentários com pin e histórico.",
       },
     ],
   }),
@@ -26,12 +27,14 @@ const destaques = [
   {
     icone: Lock,
     titulo: "Um dono por vez",
-    texto: "A peça fica na mão de um papel só. Depois que o próximo vê, ninguém reescreve o passado.",
+    texto:
+      "A peça fica na mão de um papel só. Depois que o próximo vê, ninguém reescreve o passado.",
   },
   {
     icone: MessagesSquare,
     titulo: "Comentários no ponto",
-    texto: "Clique na arte e marque exatamente onde precisa mudar. Cada versão guarda sua conversa.",
+    texto:
+      "Clique na arte e marque exatamente onde precisa mudar. Cada versão guarda sua conversa.",
   },
   {
     icone: CheckCircle2,
@@ -73,7 +76,11 @@ function Inicio() {
             deixa o histórico inteiro à vista.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Button asChild size="lg" className="gradient-brand rounded-2xl px-6 text-primary-foreground shadow-soft hover:opacity-95">
+            <Button
+              asChild
+              size="lg"
+              className="gradient-brand rounded-2xl px-6 text-primary-foreground shadow-soft hover:opacity-95"
+            >
               <Link to={session && !carregando ? "/painel" : "/auth"}>
                 Começar agora <ArrowRight className="ml-1 size-4" />
               </Link>

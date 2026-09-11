@@ -11,7 +11,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -74,7 +80,11 @@ function Administracao() {
         supabase.from("clientes").select("id, nome, empresa").order("nome").order("id"),
       ),
       contatos: await buscarTudo<Contato>(() =>
-        supabase.from("cliente_contatos").select("id, cliente_id, nome, email").order("nome").order("id"),
+        supabase
+          .from("cliente_contatos")
+          .select("id, cliente_id, nome, email")
+          .order("nome")
+          .order("id"),
       ),
       campanhas: await buscarTudo<Campanha>(() =>
         supabase
@@ -149,9 +159,15 @@ function Administracao() {
 
       <Tabs defaultValue="clientes">
         <TabsList className="rounded-2xl">
-          <TabsTrigger value="clientes" className="rounded-xl">Clientes</TabsTrigger>
-          <TabsTrigger value="campanhas" className="rounded-xl">Campanhas</TabsTrigger>
-          <TabsTrigger value="equipe" className="rounded-xl">Equipe</TabsTrigger>
+          <TabsTrigger value="clientes" className="rounded-xl">
+            Clientes
+          </TabsTrigger>
+          <TabsTrigger value="campanhas" className="rounded-xl">
+            Campanhas
+          </TabsTrigger>
+          <TabsTrigger value="equipe" className="rounded-xl">
+            Equipe
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="clientes" className="mt-4 space-y-5">
@@ -160,11 +176,21 @@ function Administracao() {
             <div className="mt-3 grid gap-3 md:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor="c-nome">Nome</Label>
-                <Input id="c-nome" className="rounded-2xl" value={clienteNome} onChange={(e) => setClienteNome(e.target.value)} />
+                <Input
+                  id="c-nome"
+                  className="rounded-2xl"
+                  value={clienteNome}
+                  onChange={(e) => setClienteNome(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="c-empresa">Empresa</Label>
-                <Input id="c-empresa" className="rounded-2xl" value={clienteEmpresa} onChange={(e) => setClienteEmpresa(e.target.value)} />
+                <Input
+                  id="c-empresa"
+                  className="rounded-2xl"
+                  value={clienteEmpresa}
+                  onChange={(e) => setClienteEmpresa(e.target.value)}
+                />
               </div>
               <div className="flex items-end">
                 <Button
@@ -172,9 +198,10 @@ function Administracao() {
                   disabled={!clienteNome.trim()}
                   onClick={() =>
                     acao.mutate(async () => {
-                      const r = await supabase
-                        .from("clientes")
-                        .insert({ nome: clienteNome.trim(), empresa: clienteEmpresa.trim() || null });
+                      const r = await supabase.from("clientes").insert({
+                        nome: clienteNome.trim(),
+                        empresa: clienteEmpresa.trim() || null,
+                      });
                       setClienteNome("");
                       setClienteEmpresa("");
                       return r;
@@ -194,21 +221,36 @@ function Administracao() {
               <div className="space-y-2">
                 <Label>Cliente</Label>
                 <Select value={contatoCliente} onValueChange={setContatoCliente}>
-                  <SelectTrigger className="rounded-2xl"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectTrigger className="rounded-2xl">
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
                   <SelectContent>
                     {(data?.clientes ?? []).map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.nome}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="ct-nome">Nome</Label>
-                <Input id="ct-nome" className="rounded-2xl" value={contatoNome} onChange={(e) => setContatoNome(e.target.value)} />
+                <Input
+                  id="ct-nome"
+                  className="rounded-2xl"
+                  value={contatoNome}
+                  onChange={(e) => setContatoNome(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="ct-email">E-mail</Label>
-                <Input id="ct-email" type="email" className="rounded-2xl" value={contatoEmail} onChange={(e) => setContatoEmail(e.target.value)} />
+                <Input
+                  id="ct-email"
+                  type="email"
+                  className="rounded-2xl"
+                  value={contatoEmail}
+                  onChange={(e) => setContatoEmail(e.target.value)}
+                />
               </div>
               <div className="flex items-end">
                 <Button
@@ -239,7 +281,8 @@ function Administracao() {
               <div key={c.id} className="rounded-3xl border bg-card p-4 shadow-soft">
                 <div className="flex items-center justify-between">
                   <p className="font-semibold">
-                    {c.nome} {c.empresa && <span className="text-muted-foreground">· {c.empresa}</span>}
+                    {c.nome}{" "}
+                    {c.empresa && <span className="text-muted-foreground">· {c.empresa}</span>}
                   </p>
                 </div>
                 <ul className="mt-2 space-y-1">
@@ -276,21 +319,35 @@ function Administracao() {
               <div className="space-y-2">
                 <Label>Cliente</Label>
                 <Select value={campCliente} onValueChange={setCampCliente}>
-                  <SelectTrigger className="rounded-2xl"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectTrigger className="rounded-2xl">
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
                   <SelectContent>
                     {(data?.clientes ?? []).map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.nome}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="cp-nome">Nome</Label>
-                <Input id="cp-nome" className="rounded-2xl" value={campNome} onChange={(e) => setCampNome(e.target.value)} />
+                <Input
+                  id="cp-nome"
+                  className="rounded-2xl"
+                  value={campNome}
+                  onChange={(e) => setCampNome(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="cp-desc">Descrição</Label>
-                <Input id="cp-desc" className="rounded-2xl" value={campDescricao} onChange={(e) => setCampDescricao(e.target.value)} />
+                <Input
+                  id="cp-desc"
+                  className="rounded-2xl"
+                  value={campDescricao}
+                  onChange={(e) => setCampDescricao(e.target.value)}
+                />
               </div>
               <div className="flex items-end">
                 <Button
@@ -317,7 +374,10 @@ function Administracao() {
 
           <div className="space-y-2">
             {(data?.campanhas ?? []).map((c) => (
-              <div key={c.id} className="flex items-center justify-between rounded-2xl border bg-card px-4 py-3">
+              <div
+                key={c.id}
+                className="flex items-center justify-between rounded-2xl border bg-card px-4 py-3"
+              >
                 <div>
                   <p className="text-sm font-semibold">{c.nome}</p>
                   <p className="text-xs text-muted-foreground">

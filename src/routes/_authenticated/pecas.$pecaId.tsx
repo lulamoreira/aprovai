@@ -58,7 +58,10 @@ export const Route = createFileRoute("/_authenticated/pecas/$pecaId")({
       { title: "Peça em aprovação — Aprova" },
       { name: "description", content: "Arte, comentários com marcação e histórico da peça." },
       { property: "og:title", content: "Peça em aprovação — Aprova" },
-      { property: "og:description", content: "Arte, comentários com marcação e histórico da peça." },
+      {
+        property: "og:description",
+        content: "Arte, comentários com marcação e histórico da peça.",
+      },
     ],
   }),
   component: TelaPeca,
@@ -441,7 +444,11 @@ function TelaPeca() {
             )}
           >
             {urlImagem ? (
-              <img src={urlImagem} alt={`Arte da peça ${peca.nome}`} className="max-h-[70vh] w-full object-contain" />
+              <img
+                src={urlImagem}
+                alt={`Arte da peça ${peca.nome}`}
+                className="max-h-[70vh] w-full object-contain"
+              />
             ) : (
               <p className="p-10 text-sm text-muted-foreground">Sem arte nesta versão.</p>
             )}
@@ -498,7 +505,9 @@ function TelaPeca() {
                       )}
                       {PAPEL_LABEL[c.autor_papel]}
                     </p>
-                    <span className="text-xs text-muted-foreground">{formatarData(c.created_at)}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {formatarData(c.created_at)}
+                    </span>
                   </div>
                   <p className="mt-1 whitespace-pre-wrap text-sm">{c.texto}</p>
                   {c.texto_original && c.texto_original !== c.texto && (
@@ -536,7 +545,9 @@ function TelaPeca() {
                   <Textarea
                     value={texto}
                     onChange={(e) => setTexto(e.target.value)}
-                    placeholder={pin ? "Comentário sobre o ponto marcado..." : "Escreva um comentário..."}
+                    placeholder={
+                      pin ? "Comentário sobre o ponto marcado..." : "Escreva um comentário..."
+                    }
                     className="min-h-20 rounded-xl"
                   />
                   {souAtendimento && (
@@ -588,12 +599,16 @@ function TelaPeca() {
                       {EVENTO_LABEL[ev.tipo] ?? ev.tipo}
                     </p>
                     {ev.detalhe && <p className="text-xs text-muted-foreground">{ev.detalhe}</p>}
-                    <p className="text-[11px] text-muted-foreground">{formatarData(ev.created_at)}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {formatarData(ev.created_at)}
+                    </p>
                   </div>
                 </div>
               ))}
               {(data?.eventos ?? []).length === 0 && (
-                <p className="py-6 text-center text-sm text-muted-foreground">Sem histórico ainda.</p>
+                <p className="py-6 text-center text-sm text-muted-foreground">
+                  Sem histórico ainda.
+                </p>
               )}
             </TabsContent>
           </Tabs>

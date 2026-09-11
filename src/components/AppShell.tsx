@@ -73,7 +73,13 @@ export function AppShell({ children }: AppShellProps) {
           <div className="hidden md:block" />
           <div className="flex items-center gap-1">
             <NotificationBell />
-            <Button variant="ghost" size="icon" className="rounded-full" onClick={sair} aria-label="Sair">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full"
+              onClick={sair}
+              aria-label="Sair"
+            >
               <LogOut className="size-5" />
             </Button>
           </div>

@@ -28,7 +28,10 @@ export const Route = createFileRoute("/_authenticated/campanhas/$campanhaId")({
       { title: "Campanha — Aprova" },
       { name: "description", content: "Quadro de peças da campanha por etapa de aprovação." },
       { property: "og:title", content: "Campanha — Aprova" },
-      { property: "og:description", content: "Quadro de peças da campanha por etapa de aprovação." },
+      {
+        property: "og:description",
+        content: "Quadro de peças da campanha por etapa de aprovação.",
+      },
     ],
   }),
   component: QuadroCampanha,
@@ -183,7 +186,9 @@ function QuadroCampanha() {
                   <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                     {STATUS_LABEL[status]}
                   </h2>
-                  <span className="text-xs font-semibold text-muted-foreground">{coluna.length}</span>
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    {coluna.length}
+                  </span>
                 </header>
                 <div className="space-y-3">
                   {coluna.map((peca) => (

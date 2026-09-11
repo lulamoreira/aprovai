@@ -98,7 +98,7 @@ function Administracao() {
   }
 
   const acao = useMutation({
-    mutationFn: async (fn: () => Promise<{ error: unknown }>) => {
+    mutationFn: async (fn: () => PromiseLike<{ error: unknown }>) => {
       const { error } = await fn();
       if (error) throw error instanceof Error ? error : new Error(String(error));
     },
@@ -120,14 +120,20 @@ function Administracao() {
   async function alternarPapel(userId: string, role: AppRole, ativo: boolean) {
     if (ativo) {
       const { error } = await supabase.from("user_roles").insert({ user_id: userId, role });
-      if (error) return toast.error(error.message);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
     } else {
       const { error } = await supabase
         .from("user_roles")
         .delete()
         .eq("user_id", userId)
         .eq("role", role);
-      if (error) return toast.error(error.message);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
     }
     recarregar();
   }

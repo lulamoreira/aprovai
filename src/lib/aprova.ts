@@ -77,10 +77,12 @@ export async function urlAssinada(path: string | null | undefined): Promise<stri
 
 const PAGINA = 500;
 
+interface ConsultaPaginavel<T> {
+  range: (de: number, ate: number) => PromiseLike<{ data: T[] | null; error: unknown }>;
+}
+
 /** Busca todas as linhas em páginas — nunca confia no limite implícito. */
-export async function buscarTudo<T>(
-  construir: () => ReturnType<typeof supabase.from> extends never ? never : any,
-): Promise<T[]> {
+export async function buscarTudo<T>(construir: () => ConsultaPaginavel<T>): Promise<T[]> {
   const linhas: T[] = [];
   for (let inicio = 0; ; inicio += PAGINA) {
     const { data, error } = await construir().range(inicio, inicio + PAGINA - 1);

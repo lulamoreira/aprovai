@@ -26,7 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function carregarPerfil(userId: string) {
     // garante o perfil (e promove o primeiro usuário a administrador)
-    await supabase.rpc("ensure_profile", { _nome: null });
+    await supabase.rpc("ensure_profile", { _nome: "" });
     const [{ data: perfil }, { data: papeis }] = await Promise.all([
       supabase.from("profiles").select("nome").eq("id", userId).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", userId),

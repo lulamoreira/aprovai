@@ -223,8 +223,7 @@ function TelaPeca() {
         p_peca_id: pecaId,
         p_texto: texto.trim(),
         p_visivel_cliente: visivelCliente,
-        p_pin_x: pin?.x,
-        p_pin_y: pin?.y,
+        ...(pin ? { p_pin_x: pin.x, p_pin_y: pin.y } : {}),
       });
       if (error) throw error;
     },

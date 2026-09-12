@@ -241,6 +241,34 @@ function TelaPeca() {
     },
   });
 
+  const { data: acessos = [], isLoading: carregandoAcessos } = useQuery({
+    queryKey: ["acessos-cliente", pecaId],
+    enabled: status === "aguardando_cliente" && souAtendimento,
+    queryFn: async () => {
+      return buscarTudo<Acesso>(() =>
+        supabase
+          .from("acessos_cliente")
+          .select(
+            "id, token, expira_em, criado_em, cliente_contato_id, cliente_contatos(nome, email)",
+          )
+          .eq("peca_id", pecaId)
+          .order("criado_em", { ascending: false })
+          .order("id"),
+      );
+    },
+  });
+
+  const acessosPorAprovador = new Map<string, Acesso>();
+  for (const a of acessos) {
+    const existente = acessosPorAprovador.get(a.cliente_contato_id);
+    if (!existente || new Date(a.criado_em) > new Date(existente.criado_em)) {
+      acessosPorAprovador.set(a.cliente_contato_id, a);
+    }
+  }
+  const acessosRecentes = Array.from(acessosPorAprovador.values()).sort(
+    (a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime(),
+  );
+
   const status = peca?.status;
   const souCriacao = temPapel("criacao", "admin");
   const souAtendimento = temPapel("atendimento", "admin");

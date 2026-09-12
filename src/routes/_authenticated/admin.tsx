@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2 } from "lucide-react";
+import { Check, Info, Pencil, Plus, Trash2, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { buscarTudo } from "@/lib/aprova";
@@ -12,20 +12,33 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
       { title: "Administração — Aprova" },
-      { name: "description", content: "Clientes, contatos, campanhas e papéis da equipe." },
+      { name: "description", content: "Clientes, aprovadores, campanhas e papéis da equipe." },
       { property: "og:title", content: "Administração — Aprova" },
-      { property: "og:description", content: "Clientes, contatos, campanhas e papéis da equipe." },
+      {
+        property: "og:description",
+        content: "Clientes, aprovadores, campanhas e papéis da equipe.",
+      },
     ],
   }),
   component: Administracao,
@@ -60,18 +73,16 @@ interface Papel {
 
 const PAPEIS: AppRole[] = ["admin", "atendimento", "criacao"];
 
+type Acao = () => PromiseLike<{ error: unknown }>;
+
 function Administracao() {
   const { temPapel } = useAuth();
   const qc = useQueryClient();
 
-  const [clienteNome, setClienteNome] = useState("");
-  const [clienteEmpresa, setClienteEmpresa] = useState("");
-  const [contatoCliente, setContatoCliente] = useState("");
-  const [contatoNome, setContatoNome] = useState("");
-  const [contatoEmail, setContatoEmail] = useState("");
-  const [campCliente, setCampCliente] = useState("");
-  const [campNome, setCampNome] = useState("");
-  const [campDescricao, setCampDescricao] = useState("");
+  const [novoCliente, setNovoCliente] = useState("");
+  const [criandoCliente, setCriandoCliente] = useState(false);
+  const [renomeando, setRenomeando] = useState<string | null>(null);
+  const [nomeEditado, setNomeEditado] = useState("");
 
   const { data } = useQuery({
     queryKey: ["admin"],
@@ -108,7 +119,7 @@ function Administracao() {
   }
 
   const acao = useMutation({
-    mutationFn: async (fn: () => PromiseLike<{ error: unknown }>) => {
+    mutationFn: async (fn: Acao) => {
       const { error } = await fn();
       if (error) throw error instanceof Error ? error : new Error(String(error));
     },
@@ -128,32 +139,24 @@ function Administracao() {
   }
 
   async function alternarPapel(userId: string, role: AppRole, ativo: boolean) {
-    if (ativo) {
-      const { error } = await supabase.from("user_roles").insert({ user_id: userId, role });
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
-    } else {
-      const { error } = await supabase
-        .from("user_roles")
-        .delete()
-        .eq("user_id", userId)
-        .eq("role", role);
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
+    const { error } = ativo
+      ? await supabase.from("user_roles").insert({ user_id: userId, role })
+      : await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", role);
+    if (error) {
+      toast.error(error.message);
+      return;
     }
     recarregar();
   }
+
+  const clientes = data?.clientes ?? [];
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <header>
         <h1 className="text-3xl font-extrabold tracking-tight">Administração</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Clientes, contatos que recebem o link, campanhas e papéis da equipe.
+          Organize suas marcas, quem aprova e as campanhas.
         </p>
       </header>
 
@@ -162,242 +165,209 @@ function Administracao() {
           <TabsTrigger value="clientes" className="rounded-xl">
             Clientes
           </TabsTrigger>
-          <TabsTrigger value="campanhas" className="rounded-xl">
-            Campanhas
-          </TabsTrigger>
           <TabsTrigger value="equipe" className="rounded-xl">
             Equipe
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="clientes" className="mt-4 space-y-5">
-          <section className="rounded-3xl border bg-card p-5 shadow-soft">
-            <h2 className="font-semibold">Novo cliente</h2>
-            <div className="mt-3 grid gap-3 md:grid-cols-3">
-              <div className="space-y-2">
-                <Label htmlFor="c-nome">Nome</Label>
-                <Input
-                  id="c-nome"
-                  className="rounded-2xl"
-                  value={clienteNome}
-                  onChange={(e) => setClienteNome(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="c-empresa">Empresa</Label>
-                <Input
-                  id="c-empresa"
-                  className="rounded-2xl"
-                  value={clienteEmpresa}
-                  onChange={(e) => setClienteEmpresa(e.target.value)}
-                />
-              </div>
-              <div className="flex items-end">
-                <Button
-                  className="gradient-brand w-full rounded-2xl text-primary-foreground hover:opacity-95"
-                  disabled={!clienteNome.trim()}
-                  onClick={() =>
-                    acao.mutate(async () => {
-                      const r = await supabase.from("clientes").insert({
-                        nome: clienteNome.trim(),
-                        empresa: clienteEmpresa.trim() || null,
-                      });
-                      setClienteNome("");
-                      setClienteEmpresa("");
-                      return r;
-                    })
-                  }
-                >
-                  <Plus className="mr-1 size-4" /> Adicionar
-                </Button>
-              </div>
-            </div>
-          </section>
+          <div className="flex items-start gap-3 rounded-3xl border border-primary/20 bg-primary/5 p-4">
+            <Info className="mt-0.5 size-4 shrink-0 text-primary" />
+            <p className="text-sm text-muted-foreground">
+              <span className="font-semibold text-foreground">Cliente é a marca</span> (ex: Lindt).
+              Dentro dela ficam os <span className="font-medium text-foreground">aprovadores</span>,
+              que recebem o link, e as <span className="font-medium text-foreground">campanhas</span>{" "}
+              (ex: Natal). As peças ficam dentro de cada campanha.
+            </p>
+          </div>
 
-          <section className="rounded-3xl border bg-card p-5 shadow-soft">
-            <h2 className="font-semibold">Novo contato do cliente</h2>
-            <p className="text-xs text-muted-foreground">Quem recebe o link mágico de aprovação.</p>
-            <div className="mt-3 grid gap-3 md:grid-cols-4">
-              <div className="space-y-2">
-                <Label>Cliente</Label>
-                <Select value={contatoCliente} onValueChange={setContatoCliente}>
-                  <SelectTrigger className="rounded-2xl">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(data?.clientes ?? []).map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="ct-nome">Nome</Label>
+          {criandoCliente ? (
+            <section className="rounded-3xl border bg-card p-5 shadow-soft">
+              <Label htmlFor="novo-cliente">Nome do cliente (marca)</Label>
+              <p className="mt-1 text-xs text-muted-foreground">
+                A marca/empresa que aprova as peças.
+              </p>
+              <div className="mt-3 flex flex-col gap-3 sm:flex-row">
                 <Input
-                  id="ct-nome"
+                  id="novo-cliente"
+                  autoFocus
                   className="rounded-2xl"
-                  value={contatoNome}
-                  onChange={(e) => setContatoNome(e.target.value)}
+                  placeholder="Ex: Lindt, Nestlé, O Boticário"
+                  value={novoCliente}
+                  onChange={(e) => setNovoCliente(e.target.value)}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="ct-email">E-mail</Label>
-                <Input
-                  id="ct-email"
-                  type="email"
-                  className="rounded-2xl"
-                  value={contatoEmail}
-                  onChange={(e) => setContatoEmail(e.target.value)}
-                />
-              </div>
-              <div className="flex items-end">
-                <Button
-                  variant="outline"
-                  className="w-full rounded-2xl"
-                  disabled={!contatoCliente || !contatoNome.trim() || !contatoEmail.trim()}
-                  onClick={() =>
-                    acao.mutate(async () => {
-                      const r = await supabase.from("cliente_contatos").insert({
-                        cliente_id: contatoCliente,
-                        nome: contatoNome.trim(),
-                        email: contatoEmail.trim(),
-                      });
-                      setContatoNome("");
-                      setContatoEmail("");
-                      return r;
-                    })
-                  }
-                >
-                  <Plus className="mr-1 size-4" /> Adicionar
-                </Button>
-              </div>
-            </div>
-          </section>
-
-          <div className="space-y-3">
-            {(data?.clientes ?? []).map((c) => (
-              <div key={c.id} className="rounded-3xl border bg-card p-4 shadow-soft">
-                <div className="flex items-center justify-between">
-                  <p className="font-semibold">
-                    {c.nome}{" "}
-                    {c.empresa && <span className="text-muted-foreground">· {c.empresa}</span>}
-                  </p>
+                <div className="flex gap-2">
+                  <Button
+                    className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
+                    disabled={!novoCliente.trim() || acao.isPending}
+                    onClick={() =>
+                      acao.mutate(async () => {
+                        const r = await supabase
+                          .from("clientes")
+                          .insert({ nome: novoCliente.trim() });
+                        setNovoCliente("");
+                        setCriandoCliente(false);
+                        return r;
+                      })
+                    }
+                  >
+                    <Check className="mr-1 size-4" /> Salvar
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="rounded-2xl"
+                    onClick={() => {
+                      setNovoCliente("");
+                      setCriandoCliente(false);
+                    }}
+                  >
+                    Cancelar
+                  </Button>
                 </div>
-                <ul className="mt-2 space-y-1">
-                  {(data?.contatos ?? [])
-                    .filter((ct) => ct.cliente_id === c.id)
-                    .map((ct) => (
-                      <li key={ct.id} className="flex items-center justify-between text-sm">
-                        <span>
-                          {ct.nome} <span className="text-muted-foreground">· {ct.email}</span>
-                        </span>
-                        <button
-                          aria-label={`Remover ${ct.nome}`}
-                          className="text-muted-foreground hover:text-destructive"
+              </div>
+            </section>
+          ) : (
+            <Button
+              className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
+              onClick={() => setCriandoCliente(true)}
+            >
+              <Plus className="mr-1 size-4" /> Novo cliente
+            </Button>
+          )}
+
+          {clientes.length === 0 ? (
+            <div className="rounded-3xl border border-dashed p-10 text-center">
+              <Users className="mx-auto size-8 text-muted-foreground" />
+              <p className="mt-3 font-semibold">Nenhum cliente ainda</p>
+              <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+                Comece cadastrando a primeira marca. Depois você adiciona os aprovadores e as
+                campanhas dela.
+              </p>
+              <Button
+                className="gradient-brand mt-4 rounded-2xl text-primary-foreground hover:opacity-95"
+                onClick={() => setCriandoCliente(true)}
+              >
+                <Plus className="mr-1 size-4" /> Novo cliente
+              </Button>
+            </div>
+          ) : (
+            <Accordion type="multiple" className="space-y-3">
+              {clientes.map((c) => (
+                <AccordionItem
+                  key={c.id}
+                  value={c.id}
+                  className="rounded-3xl border bg-card px-4 shadow-soft"
+                >
+                  <div className="flex items-center gap-2">
+                    {renomeando === c.id ? (
+                      <div className="flex flex-1 items-center gap-2 py-3">
+                        <Input
+                          autoFocus
+                          className="rounded-2xl"
+                          value={nomeEditado}
+                          onChange={(e) => setNomeEditado(e.target.value)}
+                          aria-label={`Novo nome de ${c.nome}`}
+                        />
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="rounded-xl"
+                          aria-label="Salvar nome"
+                          disabled={!nomeEditado.trim()}
                           onClick={() =>
-                            acao.mutate(() =>
-                              supabase.from("cliente_contatos").delete().eq("id", ct.id),
-                            )
+                            acao.mutate(async () => {
+                              const r = await supabase
+                                .from("clientes")
+                                .update({ nome: nomeEditado.trim() })
+                                .eq("id", c.id);
+                              setRenomeando(null);
+                              return r;
+                            })
                           }
                         >
-                          <Trash2 className="size-4" />
-                        </button>
-                      </li>
-                    ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </TabsContent>
+                          <Check className="size-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="rounded-xl"
+                          aria-label="Cancelar"
+                          onClick={() => setRenomeando(null)}
+                        >
+                          <X className="size-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <AccordionTrigger className="flex-1 py-4 hover:no-underline">
+                          <span className="text-left font-semibold">{c.nome}</span>
+                        </AccordionTrigger>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="rounded-xl"
+                          aria-label={`Renomear ${c.nome}`}
+                          onClick={() => {
+                            setRenomeando(c.id);
+                            setNomeEditado(c.nome);
+                          }}
+                        >
+                          <Pencil className="size-4" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="rounded-xl text-muted-foreground hover:text-destructive"
+                              aria-label={`Excluir ${c.nome}`}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="rounded-3xl">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir “{c.nome}”?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Isso apaga também os aprovadores, as campanhas e todas as peças
+                                deste cliente. Esta ação é irreversível.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel className="rounded-2xl">Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                className="rounded-2xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                onClick={() =>
+                                  acao.mutate(() =>
+                                    supabase.from("clientes").delete().eq("id", c.id),
+                                  )
+                                }
+                              >
+                                Excluir definitivamente
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </>
+                    )}
+                  </div>
 
-        <TabsContent value="campanhas" className="mt-4 space-y-5">
-          <section className="rounded-3xl border bg-card p-5 shadow-soft">
-            <h2 className="font-semibold">Nova campanha</h2>
-            <div className="mt-3 grid gap-3 md:grid-cols-4">
-              <div className="space-y-2">
-                <Label>Cliente</Label>
-                <Select value={campCliente} onValueChange={setCampCliente}>
-                  <SelectTrigger className="rounded-2xl">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(data?.clientes ?? []).map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cp-nome">Nome</Label>
-                <Input
-                  id="cp-nome"
-                  className="rounded-2xl"
-                  value={campNome}
-                  onChange={(e) => setCampNome(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cp-desc">Descrição</Label>
-                <Input
-                  id="cp-desc"
-                  className="rounded-2xl"
-                  value={campDescricao}
-                  onChange={(e) => setCampDescricao(e.target.value)}
-                />
-              </div>
-              <div className="flex items-end">
-                <Button
-                  className="gradient-brand w-full rounded-2xl text-primary-foreground hover:opacity-95"
-                  disabled={!campCliente || !campNome.trim()}
-                  onClick={() =>
-                    acao.mutate(async () => {
-                      const r = await supabase.from("campanhas").insert({
-                        cliente_id: campCliente,
-                        nome: campNome.trim(),
-                        descricao: campDescricao.trim() || null,
-                      });
-                      setCampNome("");
-                      setCampDescricao("");
-                      return r;
-                    })
-                  }
-                >
-                  <Plus className="mr-1 size-4" /> Criar
-                </Button>
-              </div>
-            </div>
-          </section>
-
-          <div className="space-y-2">
-            {(data?.campanhas ?? []).map((c) => (
-              <div
-                key={c.id}
-                className="flex items-center justify-between rounded-2xl border bg-card px-4 py-3"
-              >
-                <div>
-                  <p className="text-sm font-semibold">{c.nome}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {(data?.clientes ?? []).find((cl) => cl.id === c.cliente_id)?.nome}
-                  </p>
-                </div>
-                <button
-                  aria-label={`Arquivar ${c.nome}`}
-                  className="text-xs text-muted-foreground hover:text-destructive"
-                  onClick={() =>
-                    acao.mutate(() =>
-                      supabase.from("campanhas").update({ arquivada: true }).eq("id", c.id),
-                    )
-                  }
-                >
-                  Arquivar
-                </button>
-              </div>
-            ))}
-          </div>
+                  <AccordionContent className="space-y-5 pb-5">
+                    <SecaoAprovadores
+                      cliente={c}
+                      contatos={(data?.contatos ?? []).filter((ct) => ct.cliente_id === c.id)}
+                      acao={acao.mutate}
+                    />
+                    <SecaoCampanhas
+                      cliente={c}
+                      campanhas={(data?.campanhas ?? []).filter((cp) => cp.cliente_id === c.id)}
+                      acao={acao.mutate}
+                    />
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          )}
         </TabsContent>
 
         <TabsContent value="equipe" className="mt-4 space-y-3">
@@ -429,5 +399,171 @@ function Administracao() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function SecaoAprovadores({
+  cliente,
+  contatos,
+  acao,
+}: {
+  cliente: Cliente;
+  contatos: Contato[];
+  acao: (fn: Acao) => void;
+}) {
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const valido = nome.trim().length > 0 && /^\S+@\S+\.\S+$/.test(email.trim());
+
+  return (
+    <section className="rounded-2xl bg-muted/40 p-4">
+      <h3 className="text-sm font-semibold">Aprovadores</h3>
+      <p className="text-xs text-muted-foreground">Quem recebe o link mágico de aprovação.</p>
+
+      <ul className="mt-3 space-y-1">
+        {contatos.length === 0 && (
+          <li className="text-sm text-muted-foreground">Nenhum aprovador cadastrado ainda.</li>
+        )}
+        {contatos.map((ct) => (
+          <li key={ct.id} className="flex items-center justify-between text-sm">
+            <span>
+              {ct.nome} <span className="text-muted-foreground">· {ct.email}</span>
+            </span>
+            <button
+              aria-label={`Remover ${ct.nome}`}
+              className="text-muted-foreground hover:text-destructive"
+              onClick={() => acao(() => supabase.from("cliente_contatos").delete().eq("id", ct.id))}
+            >
+              <Trash2 className="size-4" />
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+        <Input
+          className="rounded-2xl bg-background"
+          placeholder="Nome"
+          aria-label={`Nome do aprovador de ${cliente.nome}`}
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+        />
+        <Input
+          type="email"
+          className="rounded-2xl bg-background"
+          placeholder="E-mail"
+          aria-label={`E-mail do aprovador de ${cliente.nome}`}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <Button
+          variant="outline"
+          className="rounded-2xl"
+          disabled={!valido}
+          onClick={() =>
+            acao(async () => {
+              const r = await supabase.from("cliente_contatos").insert({
+                cliente_id: cliente.id,
+                nome: nome.trim(),
+                email: email.trim(),
+              });
+              setNome("");
+              setEmail("");
+              return r;
+            })
+          }
+        >
+          <Plus className="mr-1 size-4" /> Adicionar
+        </Button>
+      </div>
+    </section>
+  );
+}
+
+function SecaoCampanhas({
+  cliente,
+  campanhas,
+  acao,
+}: {
+  cliente: Cliente;
+  campanhas: Campanha[];
+  acao: (fn: Acao) => void;
+}) {
+  const [nome, setNome] = useState("");
+  const [descricao, setDescricao] = useState("");
+
+  return (
+    <section className="rounded-2xl bg-muted/40 p-4">
+      <h3 className="text-sm font-semibold">Campanhas</h3>
+      <p className="text-xs text-muted-foreground">As peças ficam dentro de cada campanha.</p>
+
+      <ul className="mt-3 space-y-1">
+        {campanhas.length === 0 && (
+          <li className="text-sm text-muted-foreground">Nenhuma campanha ainda.</li>
+        )}
+        {campanhas.map((cp) => (
+          <li
+            key={cp.id}
+            className="flex items-center justify-between rounded-xl bg-background px-3 py-2"
+          >
+            <Link
+              to="/campanhas/$campanhaId"
+              params={{ campanhaId: cp.id }}
+              className="text-sm font-medium hover:text-primary"
+            >
+              {cp.nome}
+              {cp.descricao && (
+                <span className="ml-2 text-xs font-normal text-muted-foreground">
+                  {cp.descricao}
+                </span>
+              )}
+            </Link>
+            <button
+              className="text-xs text-muted-foreground hover:text-destructive"
+              onClick={() =>
+                acao(() => supabase.from("campanhas").update({ arquivada: true }).eq("id", cp.id))
+              }
+            >
+              Arquivar
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+        <Input
+          className="rounded-2xl bg-background"
+          placeholder="Nome da campanha (ex: Natal)"
+          aria-label={`Nome da campanha de ${cliente.nome}`}
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+        />
+        <Input
+          className="rounded-2xl bg-background"
+          placeholder="Descrição (opcional)"
+          aria-label={`Descrição da campanha de ${cliente.nome}`}
+          value={descricao}
+          onChange={(e) => setDescricao(e.target.value)}
+        />
+        <Button
+          className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
+          disabled={!nome.trim()}
+          onClick={() =>
+            acao(async () => {
+              const r = await supabase.from("campanhas").insert({
+                cliente_id: cliente.id,
+                nome: nome.trim(),
+                descricao: descricao.trim() || null,
+              });
+              setNome("");
+              setDescricao("");
+              return r;
+            })
+          }
+        >
+          <Plus className="mr-1 size-4" /> Criar
+        </Button>
+      </div>
+    </section>
   );
 }

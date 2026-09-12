@@ -356,6 +356,7 @@ function TelaPeca() {
   const podeEnviar =
     (status === "criacao_ajustando" && souCriacao && peca.versao_atual > 0) ||
     ((status === "aguardando_atendimento" || status === "retorno_atendimento") && souAtendimento);
+  const envioParaCliente = status === "aguardando_atendimento";
 
   return (
     <div className="mx-auto max-w-[1500px] space-y-5">

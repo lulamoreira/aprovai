@@ -117,6 +117,14 @@ interface Evento {
   detalhe: string | null;
   created_at: string;
 }
+interface Acesso {
+  id: string;
+  token: string;
+  expira_em: string;
+  criado_em: string;
+  cliente_contato_id: string;
+  cliente_contatos: { nome: string; email: string } | null;
+}
 
 function TelaPeca() {
   const { pecaId } = Route.useParams();

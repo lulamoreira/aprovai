@@ -393,7 +393,19 @@ function TelaPeca() {
             </Button>
           )}
 
-          {rotuloEnvio && podeEnviar && (
+          {rotuloEnvio && podeEnviar && envioParaCliente && (
+            <Button
+              className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
+              onClick={() => {
+                setContatosSelecionados(aprovadores.map((a) => a.id));
+                setModalContatos(true);
+              }}
+            >
+              <Send className="mr-1 size-4" /> {rotuloEnvio}
+            </Button>
+          )}
+
+          {rotuloEnvio && podeEnviar && !envioParaCliente && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95">
@@ -410,7 +422,10 @@ function TelaPeca() {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel className="rounded-2xl">Cancelar</AlertDialogCancel>
-                  <AlertDialogAction className="rounded-2xl" onClick={() => enviar.mutate()}>
+                  <AlertDialogAction
+                    className="rounded-2xl"
+                    onClick={() => enviar.mutate(undefined)}
+                  >
                     Enviar
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -642,6 +657,67 @@ function TelaPeca() {
               className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
             >
               Liberar edição
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={modalContatos} onOpenChange={setModalContatos}>
+        <DialogContent className="rounded-3xl">
+          <DialogHeader>
+            <DialogTitle>Enviar para quais aprovadores?</DialogTitle>
+            <DialogDescription>
+              Cada aprovador marcado recebe um link mágico exclusivo desta peça.
+            </DialogDescription>
+          </DialogHeader>
+
+          {carregandoAprovadores ? (
+            <Skeleton className="h-20 rounded-2xl" />
+          ) : aprovadores.length === 0 ? (
+            <p className="rounded-2xl bg-warning/20 p-4 text-sm text-warning-foreground">
+              Cadastre ao menos um aprovador para este cliente na Administração antes de enviar.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {aprovadores.map((a) => {
+                const marcado = contatosSelecionados.includes(a.id);
+                return (
+                  <label
+                    key={a.id}
+                    className="flex cursor-pointer items-center gap-3 rounded-2xl border bg-background p-3"
+                  >
+                    <Checkbox
+                      checked={marcado}
+                      onCheckedChange={(v) =>
+                        setContatosSelecionados((atual) =>
+                          v === true ? [...atual, a.id] : atual.filter((id) => id !== a.id),
+                        )
+                      }
+                    />
+                    <span>
+                      <span className="block text-sm font-semibold">{a.nome}</span>
+                      <span className="block text-xs text-muted-foreground">{a.email}</span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              className="rounded-2xl"
+              onClick={() => setModalContatos(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              disabled={contatosSelecionados.length === 0 || enviar.isPending}
+              onClick={() => enviar.mutate(contatosSelecionados)}
+              className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
+            >
+              <Send className="mr-1 size-4" /> Enviar para o cliente
             </Button>
           </DialogFooter>
         </DialogContent>

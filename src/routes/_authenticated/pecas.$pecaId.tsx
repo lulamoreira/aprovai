@@ -130,6 +130,8 @@ function TelaPeca() {
   const [motivo, setMotivo] = useState("");
   const [modalMotivo, setModalMotivo] = useState(false);
   const [enviandoArquivo, setEnviandoArquivo] = useState(false);
+  const [modalContatos, setModalContatos] = useState(false);
+  const [contatosSelecionados, setContatosSelecionados] = useState<string[]>([]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["peca", pecaId],

@@ -3,9 +3,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  Copy,
   Eye,
   History,
   Lock,
+  MessageCircle,
   MessageSquare,
   Send,
   ShieldCheck,
@@ -114,6 +116,14 @@ interface Evento {
   ator_papel: string | null;
   detalhe: string | null;
   created_at: string;
+}
+interface Acesso {
+  id: string;
+  token: string;
+  expira_em: string;
+  criado_em: string;
+  cliente_contato_id: string;
+  cliente_contatos: { nome: string; email: string } | null;
 }
 
 function TelaPeca() {
@@ -238,10 +248,65 @@ function TelaPeca() {
     (souCriacao && status === "criacao_ajustando") ||
     (souAtendimento && (status === "aguardando_atendimento" || status === "retorno_atendimento"));
 
+  const { data: acessos = [], isLoading: carregandoAcessos } = useQuery({
+    queryKey: ["acessos-cliente", pecaId],
+    enabled: status === "aguardando_cliente" && souAtendimento,
+    queryFn: async () => {
+      return buscarTudo<Acesso>(() =>
+        supabase
+          .from("acessos_cliente")
+          .select(
+            "id, token, expira_em, criado_em, cliente_contato_id, cliente_contatos(nome, email)",
+          )
+          .eq("peca_id", pecaId)
+          .order("criado_em", { ascending: false })
+          .order("id"),
+      );
+    },
+  });
+
+  const acessosPorAprovador = new Map<string, Acesso>();
+  for (const a of acessos) {
+    const existente = acessosPorAprovador.get(a.cliente_contato_id);
+    if (!existente || new Date(a.criado_em) > new Date(existente.criado_em)) {
+      acessosPorAprovador.set(a.cliente_contato_id, a);
+    }
+  }
+  const acessosRecentes = Array.from(acessosPorAprovador.values()).sort(
+    (a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime(),
+  );
+
+  function linkAprovacao(token: string) {
+    return `${window.location.origin}/aprovar/${token}`;
+  }
+
+  async function copiarLink(token: string) {
+    try {
+      await navigator.clipboard.writeText(linkAprovacao(token));
+      toast.success("Link copiado");
+    } catch {
+      toast.error("Não foi possível copiar o link");
+    }
+  }
+
+  function compartilharWhatsApp(token: string) {
+    const link = linkAprovacao(token);
+    const texto = `Olá! Você recebeu a peça "${peca?.nome ?? ""}" para aprovação. Acesse o link: ${link}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank", "noopener,noreferrer");
+  }
+
+  function formatarValidade(iso: string): string {
+    return new Intl.DateTimeFormat("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+    }).format(new Date(iso));
+  }
+
   function invalidar() {
     void qc.invalidateQueries({ queryKey: ["peca", pecaId] });
     void qc.invalidateQueries({ queryKey: ["pecas"] });
     void qc.invalidateQueries({ queryKey: ["painel"] });
+    void qc.invalidateQueries({ queryKey: ["acessos-cliente", pecaId] });
   }
 
   const comentar = useMutation({
@@ -457,6 +522,63 @@ function TelaPeca() {
           )}
         </div>
       </div>
+
+      {status === "aguardando_cliente" && souAtendimento && (
+        <section className="rounded-3xl border bg-card p-4 shadow-soft">
+          <h2 className="mb-3 flex items-center gap-2 text-base font-semibold">
+            <MessageCircle className="size-5 text-primary" /> Link de aprovação do cliente
+          </h2>
+
+          {carregandoAcessos ? (
+            <div className="space-y-2">
+              <Skeleton className="h-14 rounded-2xl" />
+              <Skeleton className="h-14 rounded-2xl" />
+            </div>
+          ) : acessosRecentes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nenhum link gerado ainda. Envie a peça para o cliente para criar os links.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {acessosRecentes.map((a) => {
+                const contato = a.cliente_contatos;
+                return (
+                  <li
+                    key={a.id}
+                    className="flex flex-col gap-3 rounded-2xl border bg-background p-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold">
+                        {contato?.nome ?? "Aprovador"}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {contato?.email ?? "—"} · válido até {formatarValidade(a.expira_em)}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-xl"
+                        onClick={() => void copiarLink(a.token)}
+                      >
+                        <Copy className="mr-1 size-4" /> Copiar link
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="gradient-brand rounded-xl text-primary-foreground hover:opacity-95"
+                        onClick={() => compartilharWhatsApp(a.token)}
+                      >
+                        <MessageCircle className="mr-1 size-4" /> WhatsApp
+                      </Button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      )}
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_400px]">
         <section className="rounded-3xl border bg-card p-4 shadow-soft">

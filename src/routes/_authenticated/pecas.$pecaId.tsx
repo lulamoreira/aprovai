@@ -3,9 +3,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  Copy,
   Eye,
   History,
   Lock,
+  MessageCircle,
   MessageSquare,
   Send,
   ShieldCheck,

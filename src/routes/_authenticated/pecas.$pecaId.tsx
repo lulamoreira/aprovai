@@ -523,6 +523,63 @@ function TelaPeca() {
         </div>
       </div>
 
+      {status === "aguardando_cliente" && souAtendimento && (
+        <section className="rounded-3xl border bg-card p-4 shadow-soft">
+          <h2 className="mb-3 flex items-center gap-2 text-base font-semibold">
+            <MessageCircle className="size-5 text-primary" /> Link de aprovação do cliente
+          </h2>
+
+          {carregandoAcessos ? (
+            <div className="space-y-2">
+              <Skeleton className="h-14 rounded-2xl" />
+              <Skeleton className="h-14 rounded-2xl" />
+            </div>
+          ) : acessosRecentes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nenhum link gerado ainda. Envie a peça para o cliente para criar os links.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {acessosRecentes.map((a) => {
+                const contato = a.cliente_contatos;
+                return (
+                  <li
+                    key={a.id}
+                    className="flex flex-col gap-3 rounded-2xl border bg-background p-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold">
+                        {contato?.nome ?? "Aprovador"}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {contato?.email ?? "—"} · válido até {formatarValidade(a.expira_em)}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-xl"
+                        onClick={() => void copiarLink(a.token)}
+                      >
+                        <Copy className="mr-1 size-4" /> Copiar link
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="gradient-brand rounded-xl text-primary-foreground hover:opacity-95"
+                        onClick={() => compartilharWhatsApp(a.token)}
+                      >
+                        <MessageCircle className="mr-1 size-4" /> WhatsApp
+                      </Button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      )}
+
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_400px]">
         <section className="rounded-3xl border bg-card p-4 shadow-soft">
           <div className="mb-3 flex flex-wrap gap-2">

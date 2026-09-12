@@ -276,6 +276,32 @@ function TelaPeca() {
     (a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime(),
   );
 
+  function linkAprovacao(token: string) {
+    return `${window.location.origin}/aprovar/${token}`;
+  }
+
+  async function copiarLink(token: string) {
+    try {
+      await navigator.clipboard.writeText(linkAprovacao(token));
+      toast.success("Link copiado");
+    } catch {
+      toast.error("Não foi possível copiar o link");
+    }
+  }
+
+  function compartilharWhatsApp(token: string) {
+    const link = linkAprovacao(token);
+    const texto = `Olá! Você recebeu a peça "${peca?.nome ?? ""}" para aprovação. Acesse o link: ${link}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank", "noopener,noreferrer");
+  }
+
+  function formatarValidade(iso: string): string {
+    return new Intl.DateTimeFormat("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+    }).format(new Date(iso));
+  }
+
   function invalidar() {
     void qc.invalidateQueries({ queryKey: ["peca", pecaId] });
     void qc.invalidateQueries({ queryKey: ["pecas"] });

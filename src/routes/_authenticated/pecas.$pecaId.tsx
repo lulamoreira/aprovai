@@ -239,12 +239,16 @@ function TelaPeca() {
   });
 
   const enviar = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.rpc("enviar_peca", { p_peca_id: pecaId });
+    mutationFn: async (contatoIds?: string[]) => {
+      const { error } = await supabase.rpc("enviar_peca", {
+        p_peca_id: pecaId,
+        ...(contatoIds && contatoIds.length > 0 ? { p_contato_ids: contatoIds } : {}),
+      });
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Peça enviada.");
+      setModalContatos(false);
       invalidar();
     },
     onError: (e: Error) => toast.error(e.message),

@@ -280,6 +280,7 @@ function TelaPeca() {
     void qc.invalidateQueries({ queryKey: ["peca", pecaId] });
     void qc.invalidateQueries({ queryKey: ["pecas"] });
     void qc.invalidateQueries({ queryKey: ["painel"] });
+    void qc.invalidateQueries({ queryKey: ["acessos-cliente", pecaId] });
   }
 
   const comentar = useMutation({

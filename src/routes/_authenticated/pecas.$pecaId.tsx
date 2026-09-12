@@ -130,6 +130,8 @@ function TelaPeca() {
   const [motivo, setMotivo] = useState("");
   const [modalMotivo, setModalMotivo] = useState(false);
   const [enviandoArquivo, setEnviandoArquivo] = useState(false);
+  const [modalContatos, setModalContatos] = useState(false);
+  const [contatosSelecionados, setContatosSelecionados] = useState<string[]>([]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["peca", pecaId],
@@ -207,6 +209,28 @@ function TelaPeca() {
     (h) => h.de_papel === "cliente" && !h.recolhido_em,
   );
 
+  const { data: aprovadores = [], isLoading: carregandoAprovadores } = useQuery({
+    queryKey: ["aprovadores-peca", peca?.campanha_id],
+    enabled: !!peca?.campanha_id,
+    queryFn: async () => {
+      const { data: campanha, error } = await supabase
+        .from("campanhas")
+        .select("cliente_id")
+        .eq("id", peca!.campanha_id)
+        .maybeSingle();
+      if (error) throw error;
+      if (!campanha?.cliente_id) return [];
+      return buscarTudo<{ id: string; nome: string; email: string }>(() =>
+        supabase
+          .from("cliente_contatos")
+          .select("id, nome, email")
+          .eq("cliente_id", campanha.cliente_id)
+          .order("nome", { ascending: true })
+          .order("id"),
+      );
+    },
+  });
+
   const status = peca?.status;
   const souCriacao = temPapel("criacao", "admin");
   const souAtendimento = temPapel("atendimento", "admin");
@@ -239,12 +263,16 @@ function TelaPeca() {
   });
 
   const enviar = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.rpc("enviar_peca", { p_peca_id: pecaId });
+    mutationFn: async (contatoIds?: string[]) => {
+      const { error } = await supabase.rpc("enviar_peca", {
+        p_peca_id: pecaId,
+        ...(contatoIds && contatoIds.length > 0 ? { p_contato_ids: contatoIds } : {}),
+      });
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Peça enviada.");
+      setModalContatos(false);
       invalidar();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -328,6 +356,7 @@ function TelaPeca() {
   const podeEnviar =
     (status === "criacao_ajustando" && souCriacao && peca.versao_atual > 0) ||
     ((status === "aguardando_atendimento" || status === "retorno_atendimento") && souAtendimento);
+  const envioParaCliente = status === "aguardando_atendimento";
 
   return (
     <div className="mx-auto max-w-[1500px] space-y-5">
@@ -387,7 +416,19 @@ function TelaPeca() {
             </Button>
           )}
 
-          {rotuloEnvio && podeEnviar && (
+          {rotuloEnvio && podeEnviar && envioParaCliente && (
+            <Button
+              className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
+              onClick={() => {
+                setContatosSelecionados(aprovadores.map((a) => a.id));
+                setModalContatos(true);
+              }}
+            >
+              <Send className="mr-1 size-4" /> {rotuloEnvio}
+            </Button>
+          )}
+
+          {rotuloEnvio && podeEnviar && !envioParaCliente && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95">
@@ -404,7 +445,10 @@ function TelaPeca() {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel className="rounded-2xl">Cancelar</AlertDialogCancel>
-                  <AlertDialogAction className="rounded-2xl" onClick={() => enviar.mutate()}>
+                  <AlertDialogAction
+                    className="rounded-2xl"
+                    onClick={() => enviar.mutate(undefined)}
+                  >
                     Enviar
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -636,6 +680,67 @@ function TelaPeca() {
               className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
             >
               Liberar edição
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={modalContatos} onOpenChange={setModalContatos}>
+        <DialogContent className="rounded-3xl">
+          <DialogHeader>
+            <DialogTitle>Enviar para quais aprovadores?</DialogTitle>
+            <DialogDescription>
+              Cada aprovador marcado recebe um link mágico exclusivo desta peça.
+            </DialogDescription>
+          </DialogHeader>
+
+          {carregandoAprovadores ? (
+            <Skeleton className="h-20 rounded-2xl" />
+          ) : aprovadores.length === 0 ? (
+            <p className="rounded-2xl bg-warning/20 p-4 text-sm text-warning-foreground">
+              Cadastre ao menos um aprovador para este cliente na Administração antes de enviar.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {aprovadores.map((a) => {
+                const marcado = contatosSelecionados.includes(a.id);
+                return (
+                  <label
+                    key={a.id}
+                    className="flex cursor-pointer items-center gap-3 rounded-2xl border bg-background p-3"
+                  >
+                    <Checkbox
+                      checked={marcado}
+                      onCheckedChange={(v) =>
+                        setContatosSelecionados((atual) =>
+                          v === true ? [...atual, a.id] : atual.filter((id) => id !== a.id),
+                        )
+                      }
+                    />
+                    <span>
+                      <span className="block text-sm font-semibold">{a.nome}</span>
+                      <span className="block text-xs text-muted-foreground">{a.email}</span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              className="rounded-2xl"
+              onClick={() => setModalContatos(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              disabled={contatosSelecionados.length === 0 || enviar.isPending}
+              onClick={() => enviar.mutate(contatosSelecionados)}
+              className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
+            >
+              <Send className="mr-1 size-4" /> Enviar para o cliente
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -83,18 +83,14 @@ function TelaCliente() {
   const versaoAtual = data?.versoes.find((v) => v.numero === data.peca.versao_atual) ?? null;
 
   useEffect(() => {
-    let ativo = true;
-    async function carregar() {
-      if (!versaoAtual?.imagem_path) return setUrlImagem(null);
-      const { data: assinada } = await supabase.storage
-        .from("peca-imagens")
-        .createSignedUrl(versaoAtual.imagem_path, 3600);
-      if (ativo) setUrlImagem(assinada?.signedUrl ?? null);
+    if (!versaoAtual?.imagem_path) {
+      setUrlImagem(null);
+      return;
     }
-    void carregar();
-    return () => {
-      ativo = false;
-    };
+    const { data: publica } = supabase.storage
+      .from("peca-imagens")
+      .getPublicUrl(versaoAtual.imagem_path);
+    setUrlImagem(publica?.publicUrl ?? null);
   }, [versaoAtual?.imagem_path]);
 
   function invalidar() {

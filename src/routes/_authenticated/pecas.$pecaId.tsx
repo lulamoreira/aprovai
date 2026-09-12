@@ -209,6 +209,28 @@ function TelaPeca() {
     (h) => h.de_papel === "cliente" && !h.recolhido_em,
   );
 
+  const { data: aprovadores = [], isLoading: carregandoAprovadores } = useQuery({
+    queryKey: ["aprovadores-peca", peca?.campanha_id],
+    enabled: !!peca?.campanha_id,
+    queryFn: async () => {
+      const { data: campanha, error } = await supabase
+        .from("campanhas")
+        .select("cliente_id")
+        .eq("id", peca!.campanha_id)
+        .maybeSingle();
+      if (error) throw error;
+      if (!campanha?.cliente_id) return [];
+      return buscarTudo<{ id: string; nome: string; email: string }>(() =>
+        supabase
+          .from("cliente_contatos")
+          .select("id, nome, email")
+          .eq("cliente_id", campanha.cliente_id)
+          .order("nome", { ascending: true })
+          .order("id"),
+      );
+    },
+  });
+
   const status = peca?.status;
   const souCriacao = temPapel("criacao", "admin");
   const souAtendimento = temPapel("atendimento", "admin");

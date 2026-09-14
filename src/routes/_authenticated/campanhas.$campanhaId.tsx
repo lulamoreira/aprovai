@@ -26,9 +26,9 @@ import { ThumbArte } from "@/components/ThumbArte";
 export const Route = createFileRoute("/_authenticated/campanhas/$campanhaId")({
   head: () => ({
     meta: [
-      { title: "Campanha — Aprova" },
+      { title: "Campanha — AprovAI" },
       { name: "description", content: "Quadro de peças da campanha por etapa de aprovação." },
-      { property: "og:title", content: "Campanha — Aprova" },
+      { property: "og:title", content: "Campanha — AprovAI" },
       {
         property: "og:description",
         content: "Quadro de peças da campanha por etapa de aprovação.",

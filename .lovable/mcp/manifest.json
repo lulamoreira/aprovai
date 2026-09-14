@@ -13,7 +13,7 @@
     "server": {
       "name": "aproveai-assistant",
       "version": "0.1.0",
-      "title": "AproveAI Assistant"
+      "title": "AprovAI Assistant"
     },
     "tools": [
       {

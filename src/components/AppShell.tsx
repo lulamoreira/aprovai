@@ -43,7 +43,7 @@ export function AppShell({ children }: AppShellProps) {
           <span className="gradient-brand flex size-9 items-center justify-center rounded-2xl">
             <Sparkles className="size-5 text-primary-foreground" />
           </span>
-          <span className="text-lg font-bold tracking-tight">Aprova</span>
+          <span className="text-lg font-bold tracking-tight">AprovAI</span>
         </Link>
         <nav className="flex flex-col gap-1">
           {itens.map((item) => (
@@ -74,7 +74,7 @@ export function AppShell({ children }: AppShellProps) {
             <span className="gradient-brand flex size-8 items-center justify-center rounded-xl">
               <Sparkles className="size-4 text-primary-foreground" />
             </span>
-            <span className="font-bold">Aprova</span>
+            <span className="font-bold">AprovAI</span>
           </Link>
           <div className="hidden md:block" />
           <div className="flex items-center gap-1">

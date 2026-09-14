@@ -20,10 +20,10 @@ export const Route = createFileRoute("/auth")({
     typeof s["next"] === "string" ? { next: s["next"] } : {},
   head: () => ({
     meta: [
-      { title: "Entrar no Aprova" },
-      { name: "description", content: "Acesso da equipe interna ao Aprova." },
-      { property: "og:title", content: "Entrar no Aprova" },
-      { property: "og:description", content: "Acesso da equipe interna ao Aprova." },
+      { title: "Entrar no AprovAI" },
+      { name: "description", content: "Acesso da equipe interna ao AprovAI." },
+      { property: "og:title", content: "Entrar no AprovAI" },
+      { property: "og:description", content: "Acesso da equipe interna ao AprovAI." },
     ],
   }),
   component: Autenticacao,
@@ -78,7 +78,7 @@ function Autenticacao() {
           <span className="gradient-brand flex size-10 items-center justify-center rounded-2xl">
             <Sparkles className="size-5 text-primary-foreground" />
           </span>
-          <span className="text-xl font-bold tracking-tight">Aprova</span>
+          <span className="text-xl font-bold tracking-tight">AprovAI</span>
         </div>
         <h1 className="text-2xl font-bold">
           {modo === "entrar" ? "Entrar na sua conta" : "Criar acesso interno"}

@@ -80,11 +80,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Aprova — aprovação de peças de campanha" },
+      { title: "AprovAI — aprovação de peças de campanha" },
       {
         name: "description",
         content:
-          "Aprova organiza a aprovação de peças de campanha entre criação, atendimento e cliente.",
+          "AprovAI organiza a aprovação de peças de campanha entre criação, atendimento e cliente.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

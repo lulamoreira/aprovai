@@ -10,9 +10,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 export const Route = createFileRoute("/_authenticated/painel")({
   head: () => ({
     meta: [
-      { title: "Painel de campanhas — Aprova" },
+      { title: "Painel de campanhas — AprovAI" },
       { name: "description", content: "Campanhas e peças em aprovação, organizadas por cliente." },
-      { property: "og:title", content: "Painel de campanhas — Aprova" },
+      { property: "og:title", content: "Painel de campanhas — AprovAI" },
       {
         property: "og:description",
         content: "Campanhas e peças em aprovação, organizadas por cliente.",

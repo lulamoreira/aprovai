@@ -32,9 +32,9 @@ import {
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
-      { title: "Administração — Aprova" },
+      { title: "Administração — AprovAI" },
       { name: "description", content: "Clientes, aprovadores, campanhas e papéis da equipe." },
-      { property: "og:title", content: "Administração — Aprova" },
+      { property: "og:title", content: "Administração — AprovAI" },
       {
         property: "og:description",
         content: "Clientes, aprovadores, campanhas e papéis da equipe.",

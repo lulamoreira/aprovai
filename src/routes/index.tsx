@@ -6,13 +6,13 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Aprova — aprovação de peças de campanha sem ruído" },
+      { title: "AprovAI — aprovação de peças de campanha sem ruído" },
       {
         name: "description",
         content:
           "Criação, atendimento e cliente aprovando peças em um fluxo só: cada peça fica com um responsável por vez e tudo fica registrado.",
       },
-      { property: "og:title", content: "Aprova — aprovação de peças de campanha" },
+      { property: "og:title", content: "AprovAI — aprovação de peças de campanha" },
       {
         property: "og:description",
         content:
@@ -53,7 +53,7 @@ function Inicio() {
           <span className="gradient-brand flex size-9 items-center justify-center rounded-2xl">
             <Sparkles className="size-5 text-primary-foreground" />
           </span>
-          <span className="text-lg font-bold tracking-tight">Aprova</span>
+          <span className="text-lg font-bold tracking-tight">AprovAI</span>
         </div>
         <Button asChild variant="ghost" className="rounded-2xl">
           <Link to={session && !carregando ? "/painel" : "/auth"}>

@@ -31,12 +31,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 export const Route = createFileRoute("/_authenticated/pecas/")({
   head: () => ({
     meta: [
-      { title: "Peças em aprovação — Aprova" },
+      { title: "Peças em aprovação — AprovAI" },
       {
         name: "description",
         content: "Todas as peças de campanha com status de aprovação, filtros e exportação em PDF.",
       },
-      { property: "og:title", content: "Peças em aprovação — Aprova" },
+      { property: "og:title", content: "Peças em aprovação — AprovAI" },
       {
         property: "og:description",
         content: "Todas as peças de campanha com status de aprovação, filtros e exportação em PDF.",

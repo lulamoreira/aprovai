@@ -771,7 +771,7 @@ function TelaPeca() {
             )}
 
             {podeComentar && <CamadaAnotacao estado={anotador} />}
-          </div>
+          </MolduraArte>
           {podeComentar && (
             <p className="mt-2 text-xs text-muted-foreground">
               {anotador.desenhando

@@ -18,6 +18,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  AnotacaoView,
+  BarraAnotacao,
+  CamadaAnotacao,
+  lerAnotacao,
+  useAnotador,
+} from "@/components/Anotacao";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/aprovar/$token")({
@@ -54,6 +61,7 @@ interface RespostaCliente {
     texto: string;
     pin_x: number | null;
     pin_y: number | null;
+    anotacao_json: unknown;
     editavel: boolean;
     edicao_autorizada: boolean;
     created_at: string;
@@ -67,6 +75,8 @@ function TelaCliente() {
   const [texto, setTexto] = useState("");
   const [pin, setPin] = useState<{ x: number; y: number } | null>(null);
   const [urlImagem, setUrlImagem] = useState<string | null>(null);
+  const [marcacaoVisivel, setMarcacaoVisivel] = useState<string | null>(null);
+  const anotador = useAnotador();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["cliente", token],
@@ -103,12 +113,17 @@ function TelaCliente() {
         p_token: token,
         p_texto: texto.trim(),
         ...(pin ? { p_pin_x: pin.x, p_pin_y: pin.y } : {}),
+        ...(anotador.strokes.length > 0
+          ? { p_anotacao_json: { strokes: anotador.strokes } }
+          : {}),
       });
       if (erro) throw erro;
     },
     onSuccess: () => {
       setTexto("");
       setPin(null);
+      anotador.limpar();
+      anotador.setDesenhando(false);
       invalidar();
     },
     onError: (e: Error) => toast.error(e.message),

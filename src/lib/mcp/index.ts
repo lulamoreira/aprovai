@@ -9,7 +9,7 @@ const projectRef = import.meta.env["VITE_SUPABASE_PROJECT_ID"] ?? "project-ref-u
 
 export default defineMcp({
   name: "aproveai-assistant",
-  title: "AproveAI Assistant",
+  title: "AprovAI Assistant",
   version: "0.1.0",
   instructions:
     "Ferramentas do AprovAI, sistema de aprovação de peças de campanha. Use `minhas_pendencias` para ver o que aguarda o usuário, `listar_pecas` e `detalhar_peca` para consultar peças, `comentar_peca` para registrar um comentário interno e `enviar_peca` para passar a peça à próxima etapa do fluxo (ação irreversível: confirme com o usuário antes).",

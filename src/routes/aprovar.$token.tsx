@@ -199,10 +199,11 @@ function TelaCliente() {
 
       <main className="mx-auto max-w-3xl space-y-5 px-4 py-6">
         <section className="rounded-3xl border bg-card p-3 shadow-soft">
+          {aberta && <BarraAnotacao estado={anotador} className="mb-3" />}
           <div
             className={cn(
               "relative flex min-h-[240px] items-center justify-center overflow-hidden rounded-2xl bg-muted",
-              aberta && "cursor-crosshair",
+              aberta && !anotador.desenhando && "cursor-crosshair",
             )}
             onClick={(e) => {
               if (!aberta) return;
@@ -238,10 +239,20 @@ function TelaCliente() {
                 className="absolute size-4 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-cyan ring-2 ring-primary"
               />
             )}
+            {marcacaoVisivel && (
+              <AnotacaoView
+                strokes={lerAnotacao(
+                  data.comentarios.find((c) => c.id === marcacaoVisivel)?.anotacao_json,
+                )}
+              />
+            )}
+            {aberta && <CamadaAnotacao estado={anotador} />}
           </div>
           {aberta && (
             <p className="px-2 pt-2 text-xs text-muted-foreground">
-              Toque na arte para marcar exatamente o ponto do seu comentário.
+              {anotador.desenhando
+                ? "Rabisque sobre a arte. O desenho vai junto com o seu comentário."
+                : "Toque na arte para marcar exatamente o ponto do seu comentário."}
             </p>
           )}
         </section>
@@ -266,6 +277,15 @@ function TelaCliente() {
                 <p className="mt-1 text-xs text-warning-foreground">
                   A agência liberou você para editar este pedido.
                 </p>
+              )}
+              {lerAnotacao(c.anotacao_json).length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setMarcacaoVisivel((atual) => (atual === c.id ? null : c.id))}
+                  className="mt-2 inline-flex items-center rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/25"
+                >
+                  {marcacaoVisivel === c.id ? "ocultar marcação" : "ver marcação"}
+                </button>
               )}
             </article>
           ))}

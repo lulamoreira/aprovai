@@ -147,6 +147,25 @@ function QuadroCampanha() {
           </p>
         </div>
 
+        <div className="flex flex-wrap items-center gap-2">
+        {temPapel("criacao", "atendimento", "admin") && (
+          <Button
+            variant="outline"
+            onClick={() => void exportarCatalogo()}
+            disabled={gerando}
+            className="rounded-2xl"
+          >
+            {gerando ? (
+              <>
+                <Loader2 className="mr-1 size-4 animate-spin" /> Gerando catálogo...
+              </>
+            ) : (
+              <>
+                <FileDown className="mr-1 size-4" /> Exportar catálogo de mudanças (PDF)
+              </>
+            )}
+          </Button>
+        )}
         {temPapel("criacao", "admin") && (
           <Dialog open={aberto} onOpenChange={setAberto}>
             <DialogTrigger asChild>

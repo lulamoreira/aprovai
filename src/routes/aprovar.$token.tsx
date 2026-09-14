@@ -48,12 +48,21 @@ export const Route = createFileRoute("/aprovar/$token")({
 
 interface RespostaCliente {
   contato: { id: string; nome: string | null };
+  /** Situação deste aprovador na rodada atual. */
+  acesso?: {
+    decisao: string | null;
+    decidido_em: string | null;
+    total: number;
+    decididos: number;
+    aprovados: number;
+  };
   peca: {
     id: string;
     nome: string;
     tamanho: string | null;
     status: PieceStatus;
     versao_atual: number;
+    modo_aprovacao: string | null;
   };
   versoes: { id: string; numero: number; imagem_path: string | null }[];
   comentarios: {

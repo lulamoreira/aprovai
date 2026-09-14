@@ -279,7 +279,12 @@ function CentralPecas() {
       )
       .map((peca) => ({
         peca,
-        situacao: montarSituacao(peca, porPeca.get(peca.id) ?? [], agora),
+        situacao: montarSituacao(
+          peca,
+          porPeca.get(peca.id) ?? [],
+          agora,
+          acessosPorPeca.get(peca.id) ?? [],
+        ),
       }));
 
     return base.sort((a, b) => {

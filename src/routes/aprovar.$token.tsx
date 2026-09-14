@@ -350,12 +350,22 @@ function TelaCliente() {
           )}
         </section>
 
-        {!aberta && (
-          <p className="rounded-2xl bg-accent p-4 text-center text-sm text-accent-foreground">
-            {data.peca.status === "aprovada"
-              ? "Esta peça já foi aprovada. Obrigado!"
-              : "A agência está trabalhando nesta peça. Você será avisado quando ela voltar."}
-          </p>
+        {aguardandoDemais ? (
+          <div className="rounded-2xl bg-accent p-4 text-center text-sm text-accent-foreground">
+            <p className="font-semibold">Recebemos sua resposta.</p>
+            <p className="mt-1">
+              Aguardando os demais aprovadores
+              {data.acesso ? ` — ${data.acesso.decididos} de ${data.acesso.total} responderam.` : "."}
+            </p>
+          </div>
+        ) : (
+          !aberta && (
+            <p className="rounded-2xl bg-accent p-4 text-center text-sm text-accent-foreground">
+              {data.peca.status === "aprovada"
+                ? "Esta peça já foi aprovada. Obrigado!"
+                : "A agência está trabalhando nesta peça. Você será avisado quando ela voltar."}
+            </p>
+          )
         )}
       </main>
 

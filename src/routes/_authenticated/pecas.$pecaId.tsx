@@ -634,6 +634,81 @@ function TelaPeca() {
         </section>
       )}
 
+      {status === "aguardando_cliente" && souAtendimento && rodada.length > 0 && (
+        <section className="rounded-3xl border bg-card p-4 shadow-soft">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <h2 className="flex items-center gap-2 text-base font-semibold">
+              <Users className="size-5 text-primary" /> Aprovações
+            </h2>
+            <span
+              className={cn(
+                "rounded-full px-3 py-1 text-xs font-semibold",
+                modoAprovacao === "um"
+                  ? "bg-warning/25 text-warning-foreground"
+                  : "bg-accent text-accent-foreground",
+              )}
+            >
+              {modoAprovacao === "um" ? "⚠️ Basta um aprovar" : "Todos precisam aprovar"}
+            </span>
+            {modoAprovacao === "todos" && (
+              <span className="text-xs font-medium text-muted-foreground">
+                {aprovadosRodada} de {totalRodada} aprovaram
+              </span>
+            )}
+          </div>
+
+          <ul className="space-y-2">
+            {rodada.map((a) => {
+              const contato = a.cliente_contatos;
+              const situacao =
+                a.decisao === "aprovado"
+                  ? `aprovou em ${formatarData(a.decidido_em)}`
+                  : a.decisao === "devolvido"
+                    ? `devolveu em ${formatarData(a.decidido_em)}`
+                    : "pendente";
+              return (
+                <li
+                  key={a.id}
+                  className="flex flex-col gap-2 rounded-2xl border bg-background p-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">{contato?.nome ?? "Aprovador"}</p>
+                    <p className="truncate text-xs text-muted-foreground">{contato?.email ?? "—"}</p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold",
+                        a.decisao === "aprovado"
+                          ? "bg-success/25 text-success-foreground"
+                          : a.decisao === "devolvido"
+                            ? "bg-info/25 text-info-foreground"
+                            : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {a.decisao === "aprovado" && <CheckCircle2 className="size-3.5" />}
+                      {situacao}
+                    </span>
+                    {!a.decisao && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-xl"
+                        disabled={cobrar.isPending}
+                        onClick={() => cobrar.mutate(a.cliente_contato_id)}
+                      >
+                        <Bell className="mr-1 size-4" /> Cobrar
+                      </Button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
+
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_400px]">
         <section className="rounded-3xl border bg-card p-4 shadow-soft">
           <div className="mb-3 flex flex-wrap gap-2">

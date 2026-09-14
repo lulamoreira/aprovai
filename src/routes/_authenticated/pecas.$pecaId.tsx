@@ -97,6 +97,8 @@ interface Versao {
   imagem_path: string | null;
   observacao: string | null;
   created_at: string;
+  largura_px: number | null;
+  altura_px: number | null;
 }
 interface Comentario {
   id: string;

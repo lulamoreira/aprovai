@@ -7,10 +7,12 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   buscarTudo,
   formatarData,
+  STATUS_CLASSE,
   STATUS_LABEL,
   STATUS_ORDEM,
   type PieceStatus,
 } from "@/lib/aprova";
+import { cn } from "@/lib/utils";
 import { gerarCatalogoMudancas } from "@/lib/catalogo-pdf";
 import { useAuth } from "@/lib/auth";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -116,7 +118,7 @@ function ListaPecas() {
       const nomesCliente = new Set(filtradas.map((p) => p.campanhas?.clientes?.nome ?? ""));
       await gerarCatalogoMudancas({
         pecas: filtradas,
-        cliente: nomesCliente.size === 1 ? [...nomesCliente][0] : null,
+        cliente: nomesCliente.size === 1 ? ([...nomesCliente][0] ?? null) : null,
         contexto: nomesCampanha.size === 1 ? [...nomesCampanha][0]! : "Seleção de peças",
       });
       toast.success("Catálogo gerado.");
@@ -197,11 +199,15 @@ function ListaPecas() {
       {contadores.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {contadores.map((c) => (
-            <StatusBadge
+            <span
               key={c.status}
-              status={c.status}
-              className="px-3"
-            >{`${c.total} ${STATUS_LABEL[c.status].toLowerCase()}`}</StatusBadge>
+              className={cn(
+                "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold",
+                STATUS_CLASSE[c.status],
+              )}
+            >
+              {c.total} {STATUS_LABEL[c.status].toLowerCase()}
+            </span>
           ))}
         </div>
       )}

@@ -57,9 +57,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/pecas/$pecaId")({
   head: () => ({
     meta: [
-      { title: "Peça em aprovação — Aprova" },
+      { title: "Peça em aprovação — AprovAI" },
       { name: "description", content: "Arte, comentários com marcação e histórico da peça." },
-      { property: "og:title", content: "Peça em aprovação — Aprova" },
+      { property: "og:title", content: "Peça em aprovação — AprovAI" },
       {
         property: "og:description",
         content: "Arte, comentários com marcação e histórico da peça.",

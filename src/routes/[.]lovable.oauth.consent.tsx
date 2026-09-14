@@ -31,12 +31,12 @@ export const Route = createFileRoute("/.lovable/oauth/consent")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Autorizar acesso — Aprova" },
-      { name: "description", content: "Autorize um aplicativo a agir em seu nome no Aprova." },
-      { property: "og:title", content: "Autorizar acesso — Aprova" },
+      { title: "Autorizar acesso — AprovAI" },
+      { name: "description", content: "Autorize um aplicativo a agir em seu nome no AprovAI." },
+      { property: "og:title", content: "Autorizar acesso — AprovAI" },
       {
         property: "og:description",
-        content: "Autorize um aplicativo a agir em seu nome no Aprova.",
+        content: "Autorize um aplicativo a agir em seu nome no AprovAI.",
       },
       { name: "robots", content: "noindex" },
     ],
@@ -110,12 +110,12 @@ function Consentimento() {
           <span className="gradient-brand flex size-10 items-center justify-center rounded-2xl">
             <Sparkles className="size-5 text-primary-foreground" />
           </span>
-          <span className="text-xl font-bold tracking-tight">Aprova</span>
+          <span className="text-xl font-bold tracking-tight">AprovAI</span>
         </div>
 
         <h1 className="text-2xl font-bold">Conectar {nomeApp} à sua conta</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Isso permite que {nomeApp} use o Aprova como você: consultar peças, ver comentários,
+          Isso permite que {nomeApp} use o AprovAI como você: consultar peças, ver comentários,
           comentar e enviar peças para a próxima etapa.
         </p>
 
@@ -127,7 +127,7 @@ function Consentimento() {
         </ul>
 
         <p className="mt-4 rounded-2xl bg-muted p-3 text-xs text-muted-foreground">
-          As permissões do Aprova continuam valendo: o aplicativo só enxerga o que o seu papel
+          As permissões do AprovAI continuam valendo: o aplicativo só enxerga o que o seu papel
           permite.
         </p>
 

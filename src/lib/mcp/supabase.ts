@@ -63,7 +63,7 @@ export function supabaseForUser(ctx: ToolContext) {
 export function naoAutenticado() {
   return {
     content: [
-      { type: "text" as const, text: "Não autenticado. Conecte-se com sua conta do Aprova." },
+      { type: "text" as const, text: "Não autenticado. Conecte-se com sua conta do AprovAI." },
     ],
     isError: true,
   };

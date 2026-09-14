@@ -24,9 +24,9 @@ export const Route = createFileRoute("/aprovar/$token")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Aprovação de peça — Aprova" },
+      { title: "Aprovação de peça — AprovAI" },
       { name: "description", content: "Avalie a arte, comente e aprove ou devolva com pedidos." },
-      { property: "og:title", content: "Aprovação de peça — Aprova" },
+      { property: "og:title", content: "Aprovação de peça — AprovAI" },
       {
         property: "og:description",
         content: "Avalie a arte, comente e aprove ou devolva com pedidos.",
@@ -169,7 +169,7 @@ function TelaCliente() {
       <header className="gradient-brand px-5 py-6 text-primary-foreground">
         <div className="mx-auto flex max-w-3xl items-center gap-2">
           <Sparkles className="size-5" />
-          <span className="font-bold">Aprova</span>
+          <span className="font-bold">AprovAI</span>
         </div>
         <div className="mx-auto mt-4 max-w-3xl">
           <p className="text-sm opacity-90">Olá, {data.contato.nome ?? "tudo bem"}!</p>

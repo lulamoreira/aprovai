@@ -108,10 +108,16 @@ export async function gerarCatalogoMudancas({
     }
   }
 
+  const logo = await logoDataUrl();
+  let xTitulo = margem;
+  if (logo) {
+    doc.addImage(logo, "PNG", margem, y - 8, 28, 28);
+    xTitulo = margem + 38;
+  }
   doc.setFont("helvetica", "bold");
   doc.setFontSize(20);
-  doc.text("Catálogo de mudanças", margem, y + 6);
-  y += 26;
+  doc.text("Catálogo de mudanças", xTitulo, y + 12);
+  y += 34;
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);

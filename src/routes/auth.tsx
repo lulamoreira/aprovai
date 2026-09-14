@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { LogoAprovAI } from "@/components/LogoAprovAI";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +44,22 @@ function Autenticacao() {
   useEffect(() => {
     if (session) window.location.replace(destino);
   }, [session, destino]);
+
+  async function entrarComGoogle() {
+    setEnviando(true);
+    try {
+      const retorno =
+        window.location.origin + "/auth?next=" + encodeURIComponent(destino);
+      const resultado = await lovable.auth.signInWithOAuth("google", { redirect_uri: retorno });
+      if (resultado.error) throw new Error("Não foi possível entrar com o Google.");
+      if (resultado.redirected) return;
+      window.location.replace(destino);
+    } catch (erro) {
+      toast.error(erro instanceof Error ? erro.message : "Não foi possível entrar com o Google.");
+    } finally {
+      setEnviando(false);
+    }
+  }
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
@@ -99,6 +116,44 @@ function Autenticacao() {
               ? "Depois do cadastro, um administrador define seu papel."
               : "Informe seu e-mail e enviaremos um link para criar uma nova senha."}
         </p>
+
+        {modo !== "recuperar" && (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={entrarComGoogle}
+              disabled={enviando}
+              className="mt-6 w-full gap-2 rounded-2xl"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+                <path
+                  fill="#4285F4"
+                  d="M23.49 12.27c0-.79-.07-1.54-.2-2.27H12v4.51h6.44a5.5 5.5 0 0 1-2.39 3.61v3h3.86c2.26-2.08 3.58-5.15 3.58-8.85Z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09A12 12 0 0 0 12 24Z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.27 14.29a7.2 7.2 0 0 1 0-4.58V6.62H1.29a12 12 0 0 0 0 10.76l3.98-3.09Z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0A12 12 0 0 0 1.29 6.62l3.98 3.09C6.22 6.86 8.87 4.75 12 4.75Z"
+                />
+              </svg>
+              Entrar com Google
+            </Button>
+
+            <div className="my-5 flex items-center gap-3">
+              <span className="h-px flex-1 bg-border" />
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">ou</span>
+              <span className="h-px flex-1 bg-border" />
+            </div>
+          </>
+        )}
 
         <form onSubmit={enviar} className="mt-6 space-y-4">
           {modo === "criar" && (

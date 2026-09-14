@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, CheckCircle2, Lock, MessagesSquare, Sparkles } from "lucide-react";
+import { ArrowRight, CheckCircle2, Lock, MessagesSquare } from "lucide-react";
+import { LogoAprovAI } from "@/components/LogoAprovAI";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 
@@ -50,9 +51,7 @@ function Inicio() {
     <div className="min-h-screen bg-background">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
         <div className="flex items-center gap-2">
-          <span className="gradient-brand flex size-9 items-center justify-center rounded-2xl">
-            <Sparkles className="size-5 text-primary-foreground" />
-          </span>
+          <LogoAprovAI tamanho={36} />
           <span className="text-lg font-bold tracking-tight">AprovAI</span>
         </div>
         <Button asChild variant="ghost" className="rounded-2xl">

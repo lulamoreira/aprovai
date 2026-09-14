@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Loader2, Sparkles, Undo2 } from "lucide-react";
+import { CheckCircle2, Loader2, Undo2 } from "lucide-react";
+import { LogoAprovAI } from "@/components/LogoAprovAI";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PAPEL_LABEL, STATUS_LABEL, formatarData, type PieceStatus } from "@/lib/aprova";
@@ -184,7 +185,7 @@ function TelaCliente() {
     <div className="min-h-screen bg-background pb-28">
       <header className="gradient-brand px-5 py-6 text-primary-foreground">
         <div className="mx-auto flex max-w-3xl items-center gap-2">
-          <Sparkles className="size-5" />
+          <LogoAprovAI tamanho={28} className="rounded-xl bg-white/20 [background-image:none]" />
           <span className="font-bold">AprovAI</span>
         </div>
         <div className="mx-auto mt-4 max-w-3xl">

@@ -27,6 +27,51 @@ interface VersaoCatalogo {
 
 const LADO_MAX = 360;
 
+/** Desenha o logo da marca (gradiente + "A" cursiva) num canvas e devolve PNG. */
+async function logoDataUrl(): Promise<string | null> {
+  try {
+    if (typeof document === "undefined") return null;
+    const lado = 128;
+    const canvas = document.createElement("canvas");
+    canvas.width = lado;
+    canvas.height = lado;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+
+    // espera a fonte cursiva antes de desenhar o texto
+    try {
+      await document.fonts.load('700 83px "Dancing Script"');
+      await document.fonts.ready;
+    } catch {
+      /* segue com fonte de aproximação */
+    }
+
+    const grad = ctx.createLinearGradient(0, lado, lado, 0);
+    grad.addColorStop(0, "#00C4CC");
+    grad.addColorStop(1, "#7D2AE8");
+    const raio = 24;
+    ctx.beginPath();
+    ctx.moveTo(raio, 0);
+    ctx.arcTo(lado, 0, lado, lado, raio);
+    ctx.arcTo(lado, lado, 0, lado, raio);
+    ctx.arcTo(0, lado, 0, 0, raio);
+    ctx.arcTo(0, 0, lado, 0, raio);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    ctx.fillStyle = "#FFFFFF";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = '700 83px "Dancing Script", Georgia, serif';
+    ctx.fillText("A", lado / 2, lado / 2 + lado * 0.05);
+
+    return canvas.toDataURL("image/png");
+  } catch {
+    return null;
+  }
+}
+
 /** Carrega a arte pela URL pública, reduz num canvas e devolve um JPEG comprimido. */
 async function miniaturaComprimida(
   path: string | null,
@@ -108,10 +153,16 @@ export async function gerarCatalogoMudancas({
     }
   }
 
+  const logo = await logoDataUrl();
+  let xTitulo = margem;
+  if (logo) {
+    doc.addImage(logo, "PNG", margem, y - 8, 28, 28);
+    xTitulo = margem + 38;
+  }
   doc.setFont("helvetica", "bold");
   doc.setFontSize(20);
-  doc.text("Catálogo de mudanças", margem, y + 6);
-  y += 26;
+  doc.text("Catálogo de mudanças", xTitulo, y + 12);
+  y += 34;
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);

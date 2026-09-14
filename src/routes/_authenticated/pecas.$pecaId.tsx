@@ -1004,6 +1004,50 @@ function TelaPeca() {
             </div>
           )}
 
+          <fieldset className="space-y-2 rounded-2xl border bg-background p-3">
+            <legend className="px-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              Como esta peça será aprovada
+            </legend>
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="radio"
+                name="modo-aprovacao"
+                value="todos"
+                checked={modoEnvio === "todos"}
+                onChange={() => setModoEnvio("todos")}
+                className="mt-1 accent-primary"
+              />
+              <span>
+                <span className="block text-sm font-semibold">Todos precisam aprovar</span>
+                <span className="block text-xs text-muted-foreground">
+                  A peça só vira aprovada quando todos os aprovadores responderem.
+                </span>
+              </span>
+            </label>
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="radio"
+                name="modo-aprovacao"
+                value="um"
+                checked={modoEnvio === "um"}
+                onChange={() => setModoEnvio("um")}
+                className="mt-1 accent-primary"
+              />
+              <span>
+                <span className="block text-sm font-semibold">Basta um aprovar</span>
+                <span className="block text-xs text-muted-foreground">
+                  A primeira resposta decide o destino da peça.
+                </span>
+              </span>
+            </label>
+            {modoEnvio === "um" && (
+              <p className="rounded-xl bg-warning/25 p-3 text-xs font-medium text-warning-foreground">
+                ⚠️ Basta UMA pessoa aprovar para a peça seguir aprovada. As demais não precisam
+                confirmar.
+              </p>
+            )}
+          </fieldset>
+
           <DialogFooter>
             <Button
               variant="outline"
@@ -1014,7 +1058,7 @@ function TelaPeca() {
             </Button>
             <Button
               disabled={contatosSelecionados.length === 0 || enviar.isPending}
-              onClick={() => enviar.mutate(contatosSelecionados)}
+              onClick={() => enviar.mutate({ contatoIds: contatosSelecionados, modo: modoEnvio })}
               className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
             >
               <Send className="mr-1 size-4" /> Enviar para o cliente

@@ -691,6 +691,10 @@ export type Database = {
             }
             Returns: string
           }
+      editar_peca_meta: {
+        Args: { p_nome: string; p_peca_id: string; p_tamanho: string }
+        Returns: undefined
+      }
       ensure_profile: { Args: { _nome: string }; Returns: undefined }
       enviar_peca: {
         Args: { p_contato_ids?: string[]; p_peca_id: string }

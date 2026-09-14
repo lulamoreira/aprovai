@@ -64,6 +64,7 @@ import {
   lerAnotacao,
   useAnotador,
 } from "@/components/Anotacao";
+import { MolduraArte } from "@/components/MolduraArte";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/pecas/$pecaId")({
@@ -97,6 +98,8 @@ interface Versao {
   imagem_path: string | null;
   observacao: string | null;
   created_at: string;
+  largura_px: number | null;
+  altura_px: number | null;
 }
 interface Comentario {
   id: string;
@@ -177,7 +180,7 @@ function TelaPeca() {
       const versoes = await buscarTudo<Versao>(() =>
         supabase
           .from("peca_versoes")
-          .select("id, numero, imagem_path, observacao, created_at")
+          .select("id, numero, imagem_path, observacao, created_at, largura_px, altura_px")
           .eq("peca_id", pecaId)
           .order("numero", { ascending: true })
           .order("id"),
@@ -452,15 +455,6 @@ function TelaPeca() {
     }
   }
 
-  function clicarImagem(e: React.MouseEvent<HTMLDivElement>) {
-    if (!podeComentar) return;
-    const box = e.currentTarget.getBoundingClientRect();
-    setPin({
-      x: Number(((e.clientX - box.left) / box.width).toFixed(4)),
-      y: Number(((e.clientY - box.top) / box.height).toFixed(4)),
-    });
-  }
-
   if (isLoading) return <Skeleton className="h-[70vh] rounded-3xl" />;
   if (!peca) return <p className="text-sm text-muted-foreground">Peça não encontrada.</p>;
 
@@ -733,23 +727,16 @@ function TelaPeca() {
 
           {podeComentar && <BarraAnotacao estado={anotador} className="mb-3" />}
 
-          <div
-            onClick={clicarImagem}
-            className={cn(
-              "relative flex min-h-[320px] items-center justify-center overflow-hidden rounded-2xl bg-muted",
-              podeComentar && !anotador.desenhando && "cursor-crosshair",
-            )}
+          <MolduraArte
+            src={urlImagem}
+            alt={`Arte da peça ${peca.nome}`}
+            largura={versaoAtiva?.largura_px ?? null}
+            altura={versaoAtiva?.altura_px ?? null}
+            alturaMaxima="70vh"
+            cursorCruz={podeComentar && !anotador.desenhando}
+            aoClicar={podeComentar ? (p: { x: number; y: number }) => setPin(p) : undefined}
+            vazio={<p className="p-10 text-sm text-muted-foreground">Sem arte nesta versão.</p>}
           >
-            {urlImagem ? (
-              <img
-                src={urlImagem}
-                alt={`Arte da peça ${peca.nome}`}
-                className="max-h-[70vh] w-full object-contain"
-              />
-            ) : (
-              <p className="p-10 text-sm text-muted-foreground">Sem arte nesta versão.</p>
-            )}
-
             {marcacaoVisivel && (
               <AnotacaoView
                 strokes={lerAnotacao(
@@ -776,7 +763,7 @@ function TelaPeca() {
             )}
 
             {podeComentar && <CamadaAnotacao estado={anotador} />}
-          </div>
+          </MolduraArte>
           {podeComentar && (
             <p className="mt-2 text-xs text-muted-foreground">
               {anotador.desenhando

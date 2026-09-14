@@ -27,6 +27,7 @@ import {
   lerAnotacao,
   useAnotador,
 } from "@/components/Anotacao";
+import { MolduraArte } from "@/components/MolduraArte";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/aprovar/$token")({
@@ -227,29 +228,14 @@ function TelaCliente() {
         )}
         <section className="rounded-3xl border bg-card p-3 shadow-soft">
           {aberta && <BarraAnotacao estado={anotador} className="mb-3" />}
-          <div
-            className={cn(
-              "relative flex min-h-[240px] items-center justify-center overflow-hidden rounded-2xl bg-muted",
-              aberta && !anotador.desenhando && "cursor-crosshair",
-            )}
-            onClick={(e) => {
-              if (!aberta) return;
-              const box = e.currentTarget.getBoundingClientRect();
-              setPin({
-                x: Number(((e.clientX - box.left) / box.width).toFixed(4)),
-                y: Number(((e.clientY - box.top) / box.height).toFixed(4)),
-              });
-            }}
+          <MolduraArte
+            src={urlImagem}
+            alt={`Arte da peça ${data.peca.nome}`}
+            alturaMaxima="70vh"
+            cursorCruz={aberta && !anotador.desenhando}
+            aoClicar={aberta ? (p: { x: number; y: number }) => setPin(p) : undefined}
+            vazio={<p className="p-10 text-sm text-muted-foreground">Arte indisponível.</p>}
           >
-            {urlImagem ? (
-              <img
-                src={urlImagem}
-                alt={`Arte da peça ${data.peca.nome}`}
-                className="w-full object-contain"
-              />
-            ) : (
-              <p className="p-10 text-sm text-muted-foreground">Arte indisponível.</p>
-            )}
             {pins.map((c, i) => (
               <span
                 key={c.id}
@@ -274,7 +260,7 @@ function TelaCliente() {
               />
             )}
             {aberta && <CamadaAnotacao estado={anotador} />}
-          </div>
+          </MolduraArte>
           {aberta && (
             <p className="px-2 pt-2 text-xs text-muted-foreground">
               {anotador.desenhando

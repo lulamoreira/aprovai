@@ -54,6 +54,7 @@ function QuadroCampanha() {
   const [aberto, setAberto] = useState(false);
   const [nome, setNome] = useState("");
   const [tamanho, setTamanho] = useState("");
+  const [gerando, setGerando] = useState(false);
 
   const { data: campanha } = useQuery({
     queryKey: ["campanha", campanhaId],
@@ -99,6 +100,27 @@ function QuadroCampanha() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  async function exportarCatalogo() {
+    if (pecas.length === 0) {
+      toast.error("Esta campanha ainda não tem peças.");
+      return;
+    }
+    setGerando(true);
+    try {
+      await gerarCatalogoMudancas({
+        pecas,
+        cliente:
+          (campanha as { clientes?: { nome: string } } | undefined)?.clientes?.nome ?? null,
+        contexto: campanha?.nome ?? "Campanha",
+      });
+      toast.success("Catálogo gerado.");
+    } catch (e) {
+      toast.error((e as Error).message || "Não foi possível gerar o catálogo.");
+    } finally {
+      setGerando(false);
+    }
+  }
 
   const meuStatus: PieceStatus[] =
     papel === "criacao"

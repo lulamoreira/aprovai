@@ -52,6 +52,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AnotacaoView,
+  BarraAnotacao,
+  CamadaAnotacao,
+  lerAnotacao,
+  useAnotador,
+} from "@/components/Anotacao";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/pecas/$pecaId")({
@@ -94,6 +101,7 @@ interface Comentario {
   texto_original: string | null;
   pin_x: number | null;
   pin_y: number | null;
+  anotacao_json: unknown;
   visivel_para_cliente: boolean;
   editavel: boolean;
   edicao_autorizada: boolean;
@@ -142,6 +150,8 @@ function TelaPeca() {
   const [enviandoArquivo, setEnviandoArquivo] = useState(false);
   const [modalContatos, setModalContatos] = useState(false);
   const [contatosSelecionados, setContatosSelecionados] = useState<string[]>([]);
+  const [marcacaoVisivel, setMarcacaoVisivel] = useState<string | null>(null);
+  const anotador = useAnotador();
 
   const { data, isLoading } = useQuery({
     queryKey: ["peca", pecaId],
@@ -165,7 +175,7 @@ function TelaPeca() {
         supabase
           .from("comentarios")
           .select(
-            "id, versao_id, handoff_id, autor_user_id, autor_papel, texto, texto_original, pin_x, pin_y, visivel_para_cliente, editavel, edicao_autorizada, locked_em, created_at",
+            "id, versao_id, handoff_id, autor_user_id, autor_papel, texto, texto_original, pin_x, pin_y, anotacao_json, visivel_para_cliente, editavel, edicao_autorizada, locked_em, created_at",
           )
           .eq("peca_id", pecaId)
           .order("created_at", { ascending: true })
@@ -316,12 +326,17 @@ function TelaPeca() {
         p_texto: texto.trim(),
         p_visivel_cliente: visivelCliente,
         ...(pin ? { p_pin_x: pin.x, p_pin_y: pin.y } : {}),
+        ...(anotador.strokes.length > 0
+          ? { p_anotacao_json: { strokes: anotador.strokes } }
+          : {}),
       });
       if (error) throw error;
     },
     onSuccess: () => {
       setTexto("");
       setPin(null);
+      anotador.limpar();
+      anotador.setDesenhando(false);
       invalidar();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -602,11 +617,13 @@ function TelaPeca() {
             )}
           </div>
 
+          {podeComentar && <BarraAnotacao estado={anotador} className="mb-3" />}
+
           <div
             onClick={clicarImagem}
             className={cn(
               "relative flex min-h-[320px] items-center justify-center overflow-hidden rounded-2xl bg-muted",
-              podeComentar && "cursor-crosshair",
+              podeComentar && !anotador.desenhando && "cursor-crosshair",
             )}
           >
             {urlImagem ? (
@@ -617,6 +634,14 @@ function TelaPeca() {
               />
             ) : (
               <p className="p-10 text-sm text-muted-foreground">Sem arte nesta versão.</p>
+            )}
+
+            {marcacaoVisivel && (
+              <AnotacaoView
+                strokes={lerAnotacao(
+                  comentariosVersao.find((c) => c.id === marcacaoVisivel)?.anotacao_json,
+                )}
+              />
             )}
 
             {pins.map((c, i) => (
@@ -635,10 +660,14 @@ function TelaPeca() {
                 className="absolute size-4 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-cyan ring-2 ring-primary"
               />
             )}
+
+            {podeComentar && <CamadaAnotacao estado={anotador} />}
           </div>
           {podeComentar && (
             <p className="mt-2 text-xs text-muted-foreground">
-              Clique na arte para marcar um ponto antes de comentar.
+              {anotador.desenhando
+                ? "Rabisque sobre a arte. O desenho entra no próximo comentário."
+                : "Clique na arte para marcar um ponto antes de comentar."}
             </p>
           )}
         </section>

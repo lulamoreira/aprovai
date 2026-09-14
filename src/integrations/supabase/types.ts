@@ -18,7 +18,10 @@ export type Database = {
         Row: {
           cliente_contato_id: string
           criado_em: string
+          decidido_em: string | null
+          decisao: string | null
           expira_em: string
+          handoff_id: string | null
           id: string
           peca_id: string
           token: string
@@ -27,7 +30,10 @@ export type Database = {
         Insert: {
           cliente_contato_id: string
           criado_em?: string
+          decidido_em?: string | null
+          decisao?: string | null
           expira_em?: string
+          handoff_id?: string | null
           id?: string
           peca_id: string
           token: string
@@ -36,7 +42,10 @@ export type Database = {
         Update: {
           cliente_contato_id?: string
           criado_em?: string
+          decidido_em?: string | null
+          decisao?: string | null
           expira_em?: string
+          handoff_id?: string | null
           id?: string
           peca_id?: string
           token?: string
@@ -48,6 +57,13 @@ export type Database = {
             columns: ["cliente_contato_id"]
             isOneToOne: false
             referencedRelation: "cliente_contatos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acessos_cliente_handoff_id_fkey"
+            columns: ["handoff_id"]
+            isOneToOne: false
+            referencedRelation: "handoffs"
             referencedColumns: ["id"]
           },
           {
@@ -536,6 +552,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          modo_aprovacao: string
           nome: string
           status: Database["public"]["Enums"]["piece_status"]
           tamanho: string | null
@@ -549,6 +566,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          modo_aprovacao?: string
           nome: string
           status?: Database["public"]["Enums"]["piece_status"]
           tamanho?: string | null
@@ -562,6 +580,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          modo_aprovacao?: string
           nome?: string
           status?: Database["public"]["Enums"]["piece_status"]
           tamanho?: string | null
@@ -635,7 +654,10 @@ export type Database = {
         Returns: {
           cliente_contato_id: string
           criado_em: string
+          decidido_em: string | null
+          decisao: string | null
           expira_em: string
+          handoff_id: string | null
           id: string
           peca_id: string
           token: string
@@ -669,6 +691,10 @@ export type Database = {
         Args: { p_comentario_id: string; p_texto: string; p_token: string }
         Returns: undefined
       }
+      cobrar_aprovador: {
+        Args: { p_cliente_contato_id: string; p_peca_id: string }
+        Returns: undefined
+      }
       comentar_interno:
         | {
             Args: {
@@ -696,10 +722,19 @@ export type Database = {
         Returns: undefined
       }
       ensure_profile: { Args: { _nome: string }; Returns: undefined }
-      enviar_peca: {
-        Args: { p_contato_ids?: string[]; p_peca_id: string }
-        Returns: undefined
-      }
+      enviar_peca:
+        | {
+            Args: { p_contato_ids?: string[]; p_peca_id: string }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_contato_ids?: string[]
+              p_modo_aprovacao?: string
+              p_peca_id: string
+            }
+            Returns: undefined
+          }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -757,6 +792,7 @@ export type Database = {
         | "enviada_correcao"
         | "aprovada"
         | "edicao_autorizada"
+        | "lembrete_aprovacao"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -911,6 +947,7 @@ export const Constants = {
         "enviada_correcao",
         "aprovada",
         "edicao_autorizada",
+        "lembrete_aprovacao",
       ],
     },
   },

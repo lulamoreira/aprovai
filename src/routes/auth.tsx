@@ -30,7 +30,7 @@ export const Route = createFileRoute("/auth")({
 });
 
 function Autenticacao() {
-  const [modo, setModo] = useState<"entrar" | "criar">("entrar");
+  const [modo, setModo] = useState<"entrar" | "criar" | "recuperar">("entrar");
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -48,7 +48,14 @@ function Autenticacao() {
     e.preventDefault();
     setEnviando(true);
     try {
-      if (modo === "entrar") {
+      if (modo === "recuperar") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + "/redefinir-senha",
+        });
+        if (error) throw error;
+        toast.success("Enviamos um link de redefinição para o seu e-mail.");
+        setModo("entrar");
+      } else if (modo === "entrar") {
         const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
         if (error) throw error;
         window.location.replace(destino);
@@ -79,12 +86,18 @@ function Autenticacao() {
           <span className="text-xl font-bold tracking-tight">AprovAI</span>
         </div>
         <h1 className="text-2xl font-bold">
-          {modo === "entrar" ? "Entrar na sua conta" : "Criar acesso interno"}
+          {modo === "entrar"
+            ? "Entrar na sua conta"
+            : modo === "criar"
+              ? "Criar acesso interno"
+              : "Recuperar senha"}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {modo === "entrar"
             ? "Acesso da equipe de criação e atendimento."
-            : "Depois do cadastro, um administrador define seu papel."}
+            : modo === "criar"
+              ? "Depois do cadastro, um administrador define seu papel."
+              : "Informe seu e-mail e enviaremos um link para criar uma nova senha."}
         </p>
 
         <form onSubmit={enviar} className="mt-6 space-y-4">
@@ -113,30 +126,46 @@ function Autenticacao() {
               required
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="senha">Senha</Label>
-            <Input
-              id="senha"
-              type="password"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              minLength={6}
-              className="rounded-2xl"
-              required
-            />
-          </div>
+          {modo !== "recuperar" && (
+            <div className="space-y-2">
+              <Label htmlFor="senha">Senha</Label>
+              <Input
+                id="senha"
+                type="password"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                minLength={6}
+                className="rounded-2xl"
+                required
+              />
+            </div>
+          )}
           <Button
             type="submit"
             disabled={enviando}
             className="gradient-brand w-full rounded-2xl text-primary-foreground hover:opacity-95"
           >
-            {enviando ? "Aguarde..." : modo === "entrar" ? "Entrar" : "Criar conta"}
+            {enviando
+              ? "Aguarde..."
+              : modo === "entrar"
+                ? "Entrar"
+                : modo === "criar"
+                  ? "Criar conta"
+                  : "Enviar link de redefinição"}
           </Button>
         </form>
 
+        {modo === "entrar" && (
+          <button
+            onClick={() => setModo("recuperar")}
+            className="mt-5 w-full text-center text-sm text-muted-foreground hover:text-foreground"
+          >
+            Esqueci minha senha
+          </button>
+        )}
         <button
-          onClick={() => setModo(modo === "entrar" ? "criar" : "entrar")}
-          className="mt-5 w-full text-center text-sm text-muted-foreground hover:text-foreground"
+          onClick={() => setModo(modo === "criar" ? "entrar" : modo === "entrar" ? "criar" : "entrar")}
+          className="mt-2 w-full text-center text-sm text-muted-foreground hover:text-foreground"
         >
           {modo === "entrar" ? "Não tenho acesso ainda" : "Já tenho conta"}
         </button>

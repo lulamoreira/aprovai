@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { Sparkles } from "lucide-react";
+import { LogoAprovAI } from "@/components/LogoAprovAI";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
@@ -107,9 +107,7 @@ function Consentimento() {
     <main className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-md rounded-3xl border bg-card p-8 shadow-lift">
         <div className="mb-6 flex items-center gap-2">
-          <span className="gradient-brand flex size-10 items-center justify-center rounded-2xl">
-            <Sparkles className="size-5 text-primary-foreground" />
-          </span>
+          <LogoAprovAI tamanho="lg" />
           <span className="text-xl font-bold tracking-tight">AprovAI</span>
         </div>
 

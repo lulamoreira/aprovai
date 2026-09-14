@@ -86,12 +86,18 @@ function Autenticacao() {
           <span className="text-xl font-bold tracking-tight">AprovAI</span>
         </div>
         <h1 className="text-2xl font-bold">
-          {modo === "entrar" ? "Entrar na sua conta" : "Criar acesso interno"}
+          {modo === "entrar"
+            ? "Entrar na sua conta"
+            : modo === "criar"
+              ? "Criar acesso interno"
+              : "Recuperar senha"}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {modo === "entrar"
             ? "Acesso da equipe de criação e atendimento."
-            : "Depois do cadastro, um administrador define seu papel."}
+            : modo === "criar"
+              ? "Depois do cadastro, um administrador define seu papel."
+              : "Informe seu e-mail e enviaremos um link para criar uma nova senha."}
         </p>
 
         <form onSubmit={enviar} className="mt-6 space-y-4">

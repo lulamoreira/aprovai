@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { LayoutDashboard, ListChecks, LogOut, Settings, Sparkles } from "lucide-react";
+import { LayoutDashboard, ListChecks, LogOut, Settings } from "lucide-react";
+import { LogoAprovAI } from "@/components/LogoAprovAI";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -40,9 +41,7 @@ export function AppShell({ children }: AppShellProps) {
     <div className="flex min-h-screen bg-background">
       <aside className="hidden w-60 shrink-0 flex-col border-r bg-sidebar px-4 py-6 md:flex">
         <Link to="/painel" className="mb-8 flex items-center gap-2 px-2">
-          <span className="gradient-brand flex size-9 items-center justify-center rounded-2xl">
-            <Sparkles className="size-5 text-primary-foreground" />
-          </span>
+          <LogoAprovAI tamanho={36} />
           <span className="text-lg font-bold tracking-tight">AprovAI</span>
         </Link>
         <nav className="flex flex-col gap-1">
@@ -71,9 +70,7 @@ export function AppShell({ children }: AppShellProps) {
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-3 border-b bg-card/80 px-4 backdrop-blur md:px-8">
           <Link to="/painel" className="flex items-center gap-2 md:hidden">
-            <span className="gradient-brand flex size-8 items-center justify-center rounded-xl">
-              <Sparkles className="size-4 text-primary-foreground" />
-            </span>
+            <LogoAprovAI tamanho={32} className="rounded-xl" />
             <span className="font-bold">AprovAI</span>
           </Link>
           <div className="hidden md:block" />

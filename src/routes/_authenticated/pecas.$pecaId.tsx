@@ -3,6 +3,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  Bell,
+  CheckCircle2,
   Copy,
   Eye,
   History,
@@ -15,6 +17,7 @@ import {
   Undo2,
   Unlock,
   Upload,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -85,6 +88,8 @@ interface Peca {
   tamanho: string | null;
   status: PieceStatus;
   versao_atual: number;
+  /** Modo da rodada atual de aprovação do cliente: 'um' ou 'todos'. */
+  modo_aprovacao: string | null;
 }
 interface Versao {
   id: string;
@@ -133,6 +138,9 @@ interface Acesso {
   expira_em: string;
   criado_em: string;
   cliente_contato_id: string;
+  handoff_id: string | null;
+  decisao: string | null;
+  decidido_em: string | null;
   cliente_contatos: { nome: string; email: string } | null;
 }
 
@@ -152,6 +160,7 @@ function TelaPeca() {
   const [enviandoArquivo, setEnviandoArquivo] = useState(false);
   const [modalContatos, setModalContatos] = useState(false);
   const [contatosSelecionados, setContatosSelecionados] = useState<string[]>([]);
+  const [modoEnvio, setModoEnvio] = useState<"todos" | "um">("todos");
   const [marcacaoVisivel, setMarcacaoVisivel] = useState<string | null>(null);
   const anotador = useAnotador();
 
@@ -161,7 +170,7 @@ function TelaPeca() {
       await supabase.rpc("marcar_visto", { p_peca_id: pecaId });
       const { data: peca, error } = await supabase
         .from("pecas")
-        .select("id, campanha_id, nome, tamanho, status, versao_atual")
+        .select("id, campanha_id, nome, tamanho, status, versao_atual, modo_aprovacao")
         .eq("id", pecaId)
         .maybeSingle();
       if (error) throw error;
@@ -268,7 +277,7 @@ function TelaPeca() {
         supabase
           .from("acessos_cliente")
           .select(
-            "id, token, expira_em, criado_em, cliente_contato_id, cliente_contatos(nome, email)",
+            "id, token, expira_em, criado_em, cliente_contato_id, handoff_id, decisao, decidido_em, cliente_contatos(nome, email)",
           )
           .eq("peca_id", pecaId)
           .order("criado_em", { ascending: false })
@@ -287,6 +296,19 @@ function TelaPeca() {
   const acessosRecentes = Array.from(acessosPorAprovador.values()).sort(
     (a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime(),
   );
+
+  /** Rodada atual = handoff do acesso mais recente; cai para os acessos recentes se for antigo. */
+  const handoffRodada = acessosRecentes[0]?.handoff_id ?? null;
+  const rodada = handoffRodada
+    ? acessos
+        .filter((a) => a.handoff_id === handoffRodada)
+        .sort((a, b) =>
+          (a.cliente_contatos?.nome ?? "").localeCompare(b.cliente_contatos?.nome ?? "", "pt-BR"),
+        )
+    : acessosRecentes;
+  const modoAprovacao = peca?.modo_aprovacao === "um" ? "um" : "todos";
+  const totalRodada = rodada.length;
+  const aprovadosRodada = rodada.filter((a) => a.decisao === "aprovado").length;
 
   function linkAprovacao(token: string) {
     return `${window.location.origin}/aprovar/${token}`;
@@ -345,10 +367,12 @@ function TelaPeca() {
   });
 
   const enviar = useMutation({
-    mutationFn: async (contatoIds?: string[]) => {
+    mutationFn: async (opcoes?: { contatoIds?: string[]; modo?: "todos" | "um" }) => {
+      const contatoIds = opcoes?.contatoIds;
       const { error } = await supabase.rpc("enviar_peca", {
         p_peca_id: pecaId,
         ...(contatoIds && contatoIds.length > 0 ? { p_contato_ids: contatoIds } : {}),
+        ...(opcoes?.modo ? { p_modo_aprovacao: opcoes.modo } : {}),
       });
       if (error) throw error;
     },
@@ -359,6 +383,19 @@ function TelaPeca() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const cobrar = useMutation({
+    mutationFn: async (clienteContatoId: string) => {
+      const { error } = await supabase.rpc("cobrar_aprovador", {
+        p_peca_id: pecaId,
+        p_cliente_contato_id: clienteContatoId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => toast.success("Lembrete enviado"),
+    onError: (e: Error) => toast.error(e.message || "Não foi possível enviar o lembrete."),
+  });
+
 
   const recolher = useMutation({
     mutationFn: async () => {
@@ -596,6 +633,81 @@ function TelaPeca() {
           )}
         </section>
       )}
+
+      {status === "aguardando_cliente" && souAtendimento && rodada.length > 0 && (
+        <section className="rounded-3xl border bg-card p-4 shadow-soft">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <h2 className="flex items-center gap-2 text-base font-semibold">
+              <Users className="size-5 text-primary" /> Aprovações
+            </h2>
+            <span
+              className={cn(
+                "rounded-full px-3 py-1 text-xs font-semibold",
+                modoAprovacao === "um"
+                  ? "bg-warning/25 text-warning-foreground"
+                  : "bg-accent text-accent-foreground",
+              )}
+            >
+              {modoAprovacao === "um" ? "⚠️ Basta um aprovar" : "Todos precisam aprovar"}
+            </span>
+            {modoAprovacao === "todos" && (
+              <span className="text-xs font-medium text-muted-foreground">
+                {aprovadosRodada} de {totalRodada} aprovaram
+              </span>
+            )}
+          </div>
+
+          <ul className="space-y-2">
+            {rodada.map((a) => {
+              const contato = a.cliente_contatos;
+              const situacao =
+                a.decisao === "aprovado"
+                  ? `aprovou em ${formatarData(a.decidido_em)}`
+                  : a.decisao === "devolvido"
+                    ? `devolveu em ${formatarData(a.decidido_em)}`
+                    : "pendente";
+              return (
+                <li
+                  key={a.id}
+                  className="flex flex-col gap-2 rounded-2xl border bg-background p-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">{contato?.nome ?? "Aprovador"}</p>
+                    <p className="truncate text-xs text-muted-foreground">{contato?.email ?? "—"}</p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold",
+                        a.decisao === "aprovado"
+                          ? "bg-success/25 text-success-foreground"
+                          : a.decisao === "devolvido"
+                            ? "bg-info/25 text-info-foreground"
+                            : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {a.decisao === "aprovado" && <CheckCircle2 className="size-3.5" />}
+                      {situacao}
+                    </span>
+                    {!a.decisao && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-xl"
+                        disabled={cobrar.isPending}
+                        onClick={() => cobrar.mutate(a.cliente_contato_id)}
+                      >
+                        <Bell className="mr-1 size-4" /> Cobrar
+                      </Button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_400px]">
         <section className="rounded-3xl border bg-card p-4 shadow-soft">
@@ -892,6 +1004,50 @@ function TelaPeca() {
             </div>
           )}
 
+          <fieldset className="space-y-2 rounded-2xl border bg-background p-3">
+            <legend className="px-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              Como esta peça será aprovada
+            </legend>
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="radio"
+                name="modo-aprovacao"
+                value="todos"
+                checked={modoEnvio === "todos"}
+                onChange={() => setModoEnvio("todos")}
+                className="mt-1 accent-primary"
+              />
+              <span>
+                <span className="block text-sm font-semibold">Todos precisam aprovar</span>
+                <span className="block text-xs text-muted-foreground">
+                  A peça só vira aprovada quando todos os aprovadores responderem.
+                </span>
+              </span>
+            </label>
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="radio"
+                name="modo-aprovacao"
+                value="um"
+                checked={modoEnvio === "um"}
+                onChange={() => setModoEnvio("um")}
+                className="mt-1 accent-primary"
+              />
+              <span>
+                <span className="block text-sm font-semibold">Basta um aprovar</span>
+                <span className="block text-xs text-muted-foreground">
+                  A primeira resposta decide o destino da peça.
+                </span>
+              </span>
+            </label>
+            {modoEnvio === "um" && (
+              <p className="rounded-xl bg-warning/25 p-3 text-xs font-medium text-warning-foreground">
+                ⚠️ Basta UMA pessoa aprovar para a peça seguir aprovada. As demais não precisam
+                confirmar.
+              </p>
+            )}
+          </fieldset>
+
           <DialogFooter>
             <Button
               variant="outline"
@@ -902,7 +1058,7 @@ function TelaPeca() {
             </Button>
             <Button
               disabled={contatosSelecionados.length === 0 || enviar.isPending}
-              onClick={() => enviar.mutate(contatosSelecionados)}
+              onClick={() => enviar.mutate({ contatoIds: contatosSelecionados, modo: modoEnvio })}
               className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
             >
               <Send className="mr-1 size-4" /> Enviar para o cliente

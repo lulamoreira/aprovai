@@ -104,7 +104,7 @@ async function processar(notificacaoId: string): Promise<void> {
   const appUrl = (process.env["APP_URL"] ?? PADRAO_APP_URL).replace(/\/+$/, "");
   let link: string | null = null;
 
-  const tiposComAcesso = ["pronta_aprovacao", "edicao_autorizada"];
+  const tiposComAcesso = ["pronta_aprovacao", "edicao_autorizada", "lembrete_aprovacao"];
   if (
     tiposComAcesso.includes(notificacao.tipo) &&
     notificacao.peca_id &&

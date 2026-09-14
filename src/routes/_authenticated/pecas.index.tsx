@@ -79,6 +79,7 @@ interface LinhaPeca {
   thumb_url: string | null;
   updated_at: string;
   campanha_id: string;
+  modo_aprovacao: string | null;
   campanhas: { nome: string; clientes: { nome: string } | null } | null;
 }
 
@@ -89,6 +90,24 @@ interface LinhaHandoff {
   enviado_em: string;
   visto_em: string | null;
   recolhido_em: string | null;
+}
+
+interface LinhaAcesso {
+  peca_id: string;
+  handoff_id: string | null;
+  decisao: string | null;
+  criado_em: string;
+}
+
+/** Placar "X de N aprovaram" da rodada atual da peça, ou null quando não se aplica. */
+function placarRodada(acessos: LinhaAcesso[]): { aprovados: number; total: number } | null {
+  if (acessos.length === 0) return null;
+  const recente = [...acessos].sort(
+    (a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime(),
+  )[0]!;
+  const rodada = acessos.filter((a) => a.handoff_id === recente.handoff_id);
+  const base = rodada.length > 0 ? rodada : acessos;
+  return { aprovados: base.filter((a) => a.decisao === "aprovado").length, total: base.length };
 }
 
 /** Formata uma duração em milissegundos como "2 d 4 h" / "3 h 10 min" / "8 min". */
@@ -113,7 +132,12 @@ interface Situacao {
   paradaMs: number | null;
 }
 
-function montarSituacao(peca: LinhaPeca, handoffs: LinhaHandoff[], agora: number): Situacao {
+function montarSituacao(
+  peca: LinhaPeca,
+  handoffs: LinhaHandoff[],
+  agora: number,
+  acessos: LinhaAcesso[],
+): Situacao {
   if (peca.status === "aprovada") {
     return {
       texto: `Aprovada em ${formatarData(peca.updated_at)}`,
@@ -143,9 +167,21 @@ function montarSituacao(peca: LinhaPeca, handoffs: LinhaHandoff[], agora: number
     ? `visto em ${formatarData(atual.visto_em)}`
     : "ainda não visto";
 
+  const placar =
+    peca.status === "aguardando_cliente" && (peca.modo_aprovacao ?? "todos") === "todos"
+      ? placarRodada(acessos)
+      : null;
+
+  const partes = [
+    `Enviada em ${formatarData(atual.enviado_em)}`,
+    visto,
+    `parada há ${duracaoHumana(agora - enviadoMs)}`,
+  ];
+  if (placar) partes.push(`${placar.aprovados} de ${placar.total} aprovaram`);
+
   return {
     texto: `De ${papelRotulo(atual.de_papel)} → ${papelRotulo(atual.para_papel)}`,
-    detalhe: `Enviada em ${formatarData(atual.enviado_em)} · ${visto} · parada há ${duracaoHumana(agora - enviadoMs)}`,
+    detalhe: partes.join(" · "),
     paradaMs: agora - enviadoMs,
   };
 }
@@ -174,7 +210,7 @@ function CentralPecas() {
         supabase
           .from("pecas")
           .select(
-            "id, nome, tamanho, status, versao_atual, thumb_url, updated_at, campanha_id, campanhas(nome, clientes(nome))",
+            "id, nome, tamanho, status, versao_atual, thumb_url, updated_at, campanha_id, modo_aprovacao, campanhas(nome, clientes(nome))",
           )
           .order("updated_at", { ascending: false })
           .order("id"),
@@ -193,6 +229,18 @@ function CentralPecas() {
       ),
   });
 
+  const { data: acessos = [] } = useQuery({
+    queryKey: ["pecas-acessos"],
+    queryFn: () =>
+      buscarTudo<LinhaAcesso>(() =>
+        supabase
+          .from("acessos_cliente")
+          .select("peca_id, handoff_id, decisao, criado_em")
+          .order("criado_em", { ascending: false })
+          .order("id"),
+      ),
+  });
+
   const porPeca = useMemo(() => {
     const mapa = new Map<string, LinhaHandoff[]>();
     for (const h of handoffs) {
@@ -202,6 +250,16 @@ function CentralPecas() {
     }
     return mapa;
   }, [handoffs]);
+
+  const acessosPorPeca = useMemo(() => {
+    const mapa = new Map<string, LinhaAcesso[]>();
+    for (const a of acessos) {
+      const lista = mapa.get(a.peca_id);
+      if (lista) lista.push(a);
+      else mapa.set(a.peca_id, [a]);
+    }
+    return mapa;
+  }, [acessos]);
 
   const campanhas = useMemo(() => {
     const mapa = new Map<string, string>();
@@ -221,7 +279,12 @@ function CentralPecas() {
       )
       .map((peca) => ({
         peca,
-        situacao: montarSituacao(peca, porPeca.get(peca.id) ?? [], agora),
+        situacao: montarSituacao(
+          peca,
+          porPeca.get(peca.id) ?? [],
+          agora,
+          acessosPorPeca.get(peca.id) ?? [],
+        ),
       }));
 
     return base.sort((a, b) => {
@@ -232,7 +295,7 @@ function CentralPecas() {
       }
       return new Date(b.peca.updated_at).getTime() - new Date(a.peca.updated_at).getTime();
     });
-  }, [pecas, porPeca, busca, status, campanha, ordem]);
+  }, [pecas, porPeca, acessosPorPeca, busca, status, campanha, ordem]);
 
   const filtradas = useMemo(() => linhas.map((l) => l.peca), [linhas]);
 

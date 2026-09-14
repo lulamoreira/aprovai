@@ -48,12 +48,21 @@ export const Route = createFileRoute("/aprovar/$token")({
 
 interface RespostaCliente {
   contato: { id: string; nome: string | null };
+  /** Situação deste aprovador na rodada atual. */
+  acesso?: {
+    decisao: string | null;
+    decidido_em: string | null;
+    total: number;
+    decididos: number;
+    aprovados: number;
+  };
   peca: {
     id: string;
     nome: string;
     tamanho: string | null;
     status: PieceStatus;
     versao_atual: number;
+    modo_aprovacao: string | null;
   };
   versoes: { id: string; numero: number; imagem_path: string | null }[];
   comentarios: {
@@ -176,7 +185,10 @@ function TelaCliente() {
     );
   }
 
-  const aberta = data.peca.status === "aguardando_cliente";
+  const modo = data.peca.modo_aprovacao === "um" ? "um" : "todos";
+  const jaRespondeu = !!data.acesso?.decisao;
+  const aguardandoDemais = jaRespondeu && data.peca.status === "aguardando_cliente";
+  const aberta = data.peca.status === "aguardando_cliente" && !jaRespondeu;
   const pins = data.comentarios.filter(
     (c) => c.versao_id === versaoAtual?.id && c.pin_x != null && c.pin_y != null,
   );
@@ -199,6 +211,20 @@ function TelaCliente() {
       </header>
 
       <main className="mx-auto max-w-3xl space-y-5 px-4 py-6">
+        {data.peca.status === "aguardando_cliente" && (
+          <p
+            className={cn(
+              "rounded-2xl p-3 text-sm",
+              modo === "um"
+                ? "bg-warning/25 text-warning-foreground"
+                : "bg-accent text-accent-foreground",
+            )}
+          >
+            {modo === "um"
+              ? "Sua aprovação sozinha já aprova esta peça."
+              : "Todos os aprovadores precisam aprovar para a peça seguir."}
+          </p>
+        )}
         <section className="rounded-3xl border bg-card p-3 shadow-soft">
           {aberta && <BarraAnotacao estado={anotador} className="mb-3" />}
           <div
@@ -324,12 +350,22 @@ function TelaCliente() {
           )}
         </section>
 
-        {!aberta && (
-          <p className="rounded-2xl bg-accent p-4 text-center text-sm text-accent-foreground">
-            {data.peca.status === "aprovada"
-              ? "Esta peça já foi aprovada. Obrigado!"
-              : "A agência está trabalhando nesta peça. Você será avisado quando ela voltar."}
-          </p>
+        {aguardandoDemais ? (
+          <div className="rounded-2xl bg-accent p-4 text-center text-sm text-accent-foreground">
+            <p className="font-semibold">Recebemos sua resposta.</p>
+            <p className="mt-1">
+              Aguardando os demais aprovadores
+              {data.acesso ? ` — ${data.acesso.decididos} de ${data.acesso.total} responderam.` : "."}
+            </p>
+          </div>
+        ) : (
+          !aberta && (
+            <p className="rounded-2xl bg-accent p-4 text-center text-sm text-accent-foreground">
+              {data.peca.status === "aprovada"
+                ? "Esta peça já foi aprovada. Obrigado!"
+                : "A agência está trabalhando nesta peça. Você será avisado quando ela voltar."}
+            </p>
+          )
         )}
       </main>
 

@@ -30,7 +30,7 @@ export const Route = createFileRoute("/auth")({
 });
 
 function Autenticacao() {
-  const [modo, setModo] = useState<"entrar" | "criar">("entrar");
+  const [modo, setModo] = useState<"entrar" | "criar" | "recuperar">("entrar");
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");

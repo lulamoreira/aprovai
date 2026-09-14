@@ -295,7 +295,7 @@ function CentralPecas() {
       }
       return new Date(b.peca.updated_at).getTime() - new Date(a.peca.updated_at).getTime();
     });
-  }, [pecas, porPeca, busca, status, campanha, ordem]);
+  }, [pecas, porPeca, acessosPorPeca, busca, status, campanha, ordem]);
 
   const filtradas = useMemo(() => linhas.map((l) => l.peca), [linhas]);
 

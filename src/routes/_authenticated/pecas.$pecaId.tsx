@@ -367,10 +367,12 @@ function TelaPeca() {
   });
 
   const enviar = useMutation({
-    mutationFn: async (contatoIds?: string[]) => {
+    mutationFn: async (opcoes?: { contatoIds?: string[]; modo?: "todos" | "um" }) => {
+      const contatoIds = opcoes?.contatoIds;
       const { error } = await supabase.rpc("enviar_peca", {
         p_peca_id: pecaId,
         ...(contatoIds && contatoIds.length > 0 ? { p_contato_ids: contatoIds } : {}),
+        ...(opcoes?.modo ? { p_modo_aprovacao: opcoes.modo } : {}),
       });
       if (error) throw error;
     },
@@ -381,6 +383,19 @@ function TelaPeca() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const cobrar = useMutation({
+    mutationFn: async (clienteContatoId: string) => {
+      const { error } = await supabase.rpc("cobrar_aprovador", {
+        p_peca_id: pecaId,
+        p_cliente_contato_id: clienteContatoId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => toast.success("Lembrete enviado"),
+    onError: (e: Error) => toast.error(e.message || "Não foi possível enviar o lembrete."),
+  });
+
 
   const recolher = useMutation({
     mutationFn: async () => {

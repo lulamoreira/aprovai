@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { LayoutDashboard, LogOut, Settings, Sparkles } from "lucide-react";
+import { LayoutDashboard, ListChecks, LogOut, Settings, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -27,6 +27,12 @@ export function AppShell({ children }: AppShellProps) {
 
   const itens = [
     { to: "/painel", rotulo: "Painel", icone: LayoutDashboard, visivel: true },
+    {
+      to: "/pecas",
+      rotulo: "Peças",
+      icone: ListChecks,
+      visivel: temPapel("criacao", "atendimento", "admin"),
+    },
     { to: "/admin", rotulo: "Administração", icone: Settings, visivel: temPapel("admin") },
   ].filter((i) => i.visivel);
 

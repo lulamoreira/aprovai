@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, FileDown, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { buscarTudo, STATUS_LABEL, STATUS_ORDEM, type PieceStatus } from "@/lib/aprova";
+import { gerarCatalogoMudancas } from "@/lib/catalogo-pdf";
 import { useAuth } from "@/lib/auth";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,7 @@ function QuadroCampanha() {
   const [aberto, setAberto] = useState(false);
   const [nome, setNome] = useState("");
   const [tamanho, setTamanho] = useState("");
+  const [gerando, setGerando] = useState(false);
 
   const { data: campanha } = useQuery({
     queryKey: ["campanha", campanhaId],
@@ -99,6 +101,27 @@ function QuadroCampanha() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  async function exportarCatalogo() {
+    if (pecas.length === 0) {
+      toast.error("Esta campanha ainda não tem peças.");
+      return;
+    }
+    setGerando(true);
+    try {
+      await gerarCatalogoMudancas({
+        pecas,
+        cliente:
+          (campanha as { clientes?: { nome: string } } | undefined)?.clientes?.nome ?? null,
+        contexto: campanha?.nome ?? "Campanha",
+      });
+      toast.success("Catálogo gerado.");
+    } catch (e) {
+      toast.error((e as Error).message || "Não foi possível gerar o catálogo.");
+    } finally {
+      setGerando(false);
+    }
+  }
+
   const meuStatus: PieceStatus[] =
     papel === "criacao"
       ? ["criacao_ajustando"]
@@ -124,6 +147,25 @@ function QuadroCampanha() {
           </p>
         </div>
 
+        <div className="flex flex-wrap items-center gap-2">
+        {temPapel("criacao", "atendimento", "admin") && (
+          <Button
+            variant="outline"
+            onClick={() => void exportarCatalogo()}
+            disabled={gerando}
+            className="rounded-2xl"
+          >
+            {gerando ? (
+              <>
+                <Loader2 className="mr-1 size-4 animate-spin" /> Gerando catálogo...
+              </>
+            ) : (
+              <>
+                <FileDown className="mr-1 size-4" /> Exportar catálogo de mudanças (PDF)
+              </>
+            )}
+          </Button>
+        )}
         {temPapel("criacao", "admin") && (
           <Dialog open={aberto} onOpenChange={setAberto}>
             <DialogTrigger asChild>
@@ -172,6 +214,7 @@ function QuadroCampanha() {
             </DialogContent>
           </Dialog>
         )}
+        </div>
       </div>
 
       {isLoading ? (

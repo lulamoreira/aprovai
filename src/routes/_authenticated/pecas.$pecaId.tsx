@@ -179,7 +179,7 @@ function TelaPeca() {
       const versoes = await buscarTudo<Versao>(() =>
         supabase
           .from("peca_versoes")
-          .select("id, numero, imagem_path, observacao, created_at")
+          .select("id, numero, imagem_path, observacao, created_at, largura_px, altura_px")
           .eq("peca_id", pecaId)
           .order("numero", { ascending: true })
           .order("id"),

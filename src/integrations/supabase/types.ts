@@ -722,19 +722,14 @@ export type Database = {
         Returns: undefined
       }
       ensure_profile: { Args: { _nome: string }; Returns: undefined }
-      enviar_peca:
-        | {
-            Args: { p_contato_ids?: string[]; p_peca_id: string }
-            Returns: undefined
-          }
-        | {
-            Args: {
-              p_contato_ids?: string[]
-              p_modo_aprovacao?: string
-              p_peca_id: string
-            }
-            Returns: undefined
-          }
+      enviar_peca: {
+        Args: {
+          p_contato_ids?: string[]
+          p_modo_aprovacao?: string
+          p_peca_id: string
+        }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

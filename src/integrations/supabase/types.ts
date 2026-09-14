@@ -669,16 +669,28 @@ export type Database = {
         Args: { p_comentario_id: string; p_texto: string; p_token: string }
         Returns: undefined
       }
-      comentar_interno: {
-        Args: {
-          p_peca_id: string
-          p_pin_x?: number
-          p_pin_y?: number
-          p_texto: string
-          p_visivel_cliente?: boolean
-        }
-        Returns: string
-      }
+      comentar_interno:
+        | {
+            Args: {
+              p_peca_id: string
+              p_pin_x?: number
+              p_pin_y?: number
+              p_texto: string
+              p_visivel_cliente?: boolean
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_anotacao_json?: Json
+              p_peca_id: string
+              p_pin_x?: number
+              p_pin_y?: number
+              p_texto: string
+              p_visivel_cliente?: boolean
+            }
+            Returns: string
+          }
       ensure_profile: { Args: { _nome: string }; Returns: undefined }
       enviar_peca: {
         Args: { p_contato_ids?: string[]; p_peca_id: string }

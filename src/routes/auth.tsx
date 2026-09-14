@@ -126,30 +126,46 @@ function Autenticacao() {
               required
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="senha">Senha</Label>
-            <Input
-              id="senha"
-              type="password"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              minLength={6}
-              className="rounded-2xl"
-              required
-            />
-          </div>
+          {modo !== "recuperar" && (
+            <div className="space-y-2">
+              <Label htmlFor="senha">Senha</Label>
+              <Input
+                id="senha"
+                type="password"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                minLength={6}
+                className="rounded-2xl"
+                required
+              />
+            </div>
+          )}
           <Button
             type="submit"
             disabled={enviando}
             className="gradient-brand w-full rounded-2xl text-primary-foreground hover:opacity-95"
           >
-            {enviando ? "Aguarde..." : modo === "entrar" ? "Entrar" : "Criar conta"}
+            {enviando
+              ? "Aguarde..."
+              : modo === "entrar"
+                ? "Entrar"
+                : modo === "criar"
+                  ? "Criar conta"
+                  : "Enviar link de redefinição"}
           </Button>
         </form>
 
+        {modo === "entrar" && (
+          <button
+            onClick={() => setModo("recuperar")}
+            className="mt-5 w-full text-center text-sm text-muted-foreground hover:text-foreground"
+          >
+            Esqueci minha senha
+          </button>
+        )}
         <button
-          onClick={() => setModo(modo === "entrar" ? "criar" : "entrar")}
-          className="mt-5 w-full text-center text-sm text-muted-foreground hover:text-foreground"
+          onClick={() => setModo(modo === "criar" ? "entrar" : modo === "entrar" ? "criar" : "entrar")}
+          className="mt-2 w-full text-center text-sm text-muted-foreground hover:text-foreground"
         >
           {modo === "entrar" ? "Não tenho acesso ainda" : "Já tenho conta"}
         </button>

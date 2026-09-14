@@ -211,6 +211,20 @@ function TelaCliente() {
       </header>
 
       <main className="mx-auto max-w-3xl space-y-5 px-4 py-6">
+        {data.peca.status === "aguardando_cliente" && (
+          <p
+            className={cn(
+              "rounded-2xl p-3 text-sm",
+              modo === "um"
+                ? "bg-warning/25 text-warning-foreground"
+                : "bg-accent text-accent-foreground",
+            )}
+          >
+            {modo === "um"
+              ? "Sua aprovação sozinha já aprova esta peça."
+              : "Todos os aprovadores precisam aprovar para a peça seguir."}
+          </p>
+        )}
         <section className="rounded-3xl border bg-card p-3 shadow-soft">
           {aberta && <BarraAnotacao estado={anotador} className="mb-3" />}
           <div

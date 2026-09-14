@@ -3,6 +3,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  Bell,
+  CheckCircle2,
   Copy,
   Eye,
   History,
@@ -15,6 +17,7 @@ import {
   Undo2,
   Unlock,
   Upload,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -85,6 +88,8 @@ interface Peca {
   tamanho: string | null;
   status: PieceStatus;
   versao_atual: number;
+  /** Modo da rodada atual de aprovação do cliente: 'um' ou 'todos'. */
+  modo_aprovacao: string | null;
 }
 interface Versao {
   id: string;
@@ -133,6 +138,9 @@ interface Acesso {
   expira_em: string;
   criado_em: string;
   cliente_contato_id: string;
+  handoff_id: string | null;
+  decisao: string | null;
+  decidido_em: string | null;
   cliente_contatos: { nome: string; email: string } | null;
 }
 
@@ -152,6 +160,7 @@ function TelaPeca() {
   const [enviandoArquivo, setEnviandoArquivo] = useState(false);
   const [modalContatos, setModalContatos] = useState(false);
   const [contatosSelecionados, setContatosSelecionados] = useState<string[]>([]);
+  const [modoEnvio, setModoEnvio] = useState<"todos" | "um">("todos");
   const [marcacaoVisivel, setMarcacaoVisivel] = useState<string | null>(null);
   const anotador = useAnotador();
 
@@ -161,7 +170,7 @@ function TelaPeca() {
       await supabase.rpc("marcar_visto", { p_peca_id: pecaId });
       const { data: peca, error } = await supabase
         .from("pecas")
-        .select("id, campanha_id, nome, tamanho, status, versao_atual")
+        .select("id, campanha_id, nome, tamanho, status, versao_atual, modo_aprovacao")
         .eq("id", pecaId)
         .maybeSingle();
       if (error) throw error;
@@ -268,7 +277,7 @@ function TelaPeca() {
         supabase
           .from("acessos_cliente")
           .select(
-            "id, token, expira_em, criado_em, cliente_contato_id, cliente_contatos(nome, email)",
+            "id, token, expira_em, criado_em, cliente_contato_id, handoff_id, decisao, decidido_em, cliente_contatos(nome, email)",
           )
           .eq("peca_id", pecaId)
           .order("criado_em", { ascending: false })
@@ -287,6 +296,19 @@ function TelaPeca() {
   const acessosRecentes = Array.from(acessosPorAprovador.values()).sort(
     (a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime(),
   );
+
+  /** Rodada atual = handoff do acesso mais recente; cai para os acessos recentes se for antigo. */
+  const handoffRodada = acessosRecentes[0]?.handoff_id ?? null;
+  const rodada = handoffRodada
+    ? acessos
+        .filter((a) => a.handoff_id === handoffRodada)
+        .sort((a, b) =>
+          (a.cliente_contatos?.nome ?? "").localeCompare(b.cliente_contatos?.nome ?? "", "pt-BR"),
+        )
+    : acessosRecentes;
+  const modoAprovacao = peca?.modo_aprovacao === "um" ? "um" : "todos";
+  const totalRodada = rodada.length;
+  const aprovadosRodada = rodada.filter((a) => a.decisao === "aprovado").length;
 
   function linkAprovacao(token: string) {
     return `${window.location.origin}/aprovar/${token}`;

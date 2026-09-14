@@ -185,7 +185,10 @@ function TelaCliente() {
     );
   }
 
-  const aberta = data.peca.status === "aguardando_cliente";
+  const modo = data.peca.modo_aprovacao === "um" ? "um" : "todos";
+  const jaRespondeu = !!data.acesso?.decisao;
+  const aguardandoDemais = jaRespondeu && data.peca.status === "aguardando_cliente";
+  const aberta = data.peca.status === "aguardando_cliente" && !jaRespondeu;
   const pins = data.comentarios.filter(
     (c) => c.versao_id === versaoAtual?.id && c.pin_x != null && c.pin_y != null,
   );

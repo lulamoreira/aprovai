@@ -79,6 +79,7 @@ interface LinhaPeca {
   thumb_url: string | null;
   updated_at: string;
   campanha_id: string;
+  modo_aprovacao: string | null;
   campanhas: { nome: string; clientes: { nome: string } | null } | null;
 }
 
@@ -89,6 +90,24 @@ interface LinhaHandoff {
   enviado_em: string;
   visto_em: string | null;
   recolhido_em: string | null;
+}
+
+interface LinhaAcesso {
+  peca_id: string;
+  handoff_id: string | null;
+  decisao: string | null;
+  criado_em: string;
+}
+
+/** Placar "X de N aprovaram" da rodada atual da peça, ou null quando não se aplica. */
+function placarRodada(acessos: LinhaAcesso[]): { aprovados: number; total: number } | null {
+  if (acessos.length === 0) return null;
+  const recente = [...acessos].sort(
+    (a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime(),
+  )[0]!;
+  const rodada = acessos.filter((a) => a.handoff_id === recente.handoff_id);
+  const base = rodada.length > 0 ? rodada : acessos;
+  return { aprovados: base.filter((a) => a.decisao === "aprovado").length, total: base.length };
 }
 
 /** Formata uma duração em milissegundos como "2 d 4 h" / "3 h 10 min" / "8 min". */

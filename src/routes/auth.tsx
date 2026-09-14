@@ -48,7 +48,14 @@ function Autenticacao() {
     e.preventDefault();
     setEnviando(true);
     try {
-      if (modo === "entrar") {
+      if (modo === "recuperar") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + "/redefinir-senha",
+        });
+        if (error) throw error;
+        toast.success("Enviamos um link de redefinição para o seu e-mail.");
+        setModo("entrar");
+      } else if (modo === "entrar") {
         const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
         if (error) throw error;
         window.location.replace(destino);

@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   AnotacaoView,
+  anotacaoParaJson,
   BarraAnotacao,
   CamadaAnotacao,
   lerAnotacao,
@@ -114,7 +115,7 @@ function TelaCliente() {
         p_texto: texto.trim(),
         ...(pin ? { p_pin_x: pin.x, p_pin_y: pin.y } : {}),
         ...(anotador.strokes.length > 0
-          ? { p_anotacao_json: { strokes: anotador.strokes } }
+          ? { p_anotacao_json: anotacaoParaJson(anotador.strokes) }
           : {}),
       });
       if (erro) throw erro;

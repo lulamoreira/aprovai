@@ -55,6 +55,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   AnotacaoView,
+  anotacaoParaJson,
   BarraAnotacao,
   CamadaAnotacao,
   lerAnotacao,
@@ -328,7 +329,7 @@ function TelaPeca() {
         p_visivel_cliente: visivelCliente,
         ...(pin ? { p_pin_x: pin.x, p_pin_y: pin.y } : {}),
         ...(anotador.strokes.length > 0
-          ? { p_anotacao_json: { strokes: anotador.strokes } }
+          ? { p_anotacao_json: anotacaoParaJson(anotador.strokes) }
           : {}),
       });
       if (error) throw error;

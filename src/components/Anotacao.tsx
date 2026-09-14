@@ -1,3 +1,4 @@
+import type { Json } from "@/integrations/supabase/types";
 import { useCallback, useState } from "react";
 import { Eraser, Pencil, RotateCcw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -271,4 +272,15 @@ export function CamadaAnotacao({ estado }: CamadaAnotacaoProps) {
       <AnotacaoView strokes={estado.strokes} />
     </div>
   );
+}
+
+/** Serializa os traços no formato jsonb aceito pelas RPCs. */
+export function anotacaoParaJson(strokes: Traco[]): Json {
+  return {
+    strokes: strokes.map((t) => ({
+      color: t.color,
+      size: t.size,
+      points: t.points.map(([x, y]) => [x, y]),
+    })),
+  } as unknown as Json;
 }

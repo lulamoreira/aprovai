@@ -735,23 +735,16 @@ function TelaPeca() {
 
           {podeComentar && <BarraAnotacao estado={anotador} className="mb-3" />}
 
-          <div
-            onClick={clicarImagem}
-            className={cn(
-              "relative flex min-h-[320px] items-center justify-center overflow-hidden rounded-2xl bg-muted",
-              podeComentar && !anotador.desenhando && "cursor-crosshair",
-            )}
+          <MolduraArte
+            src={urlImagem}
+            alt={`Arte da peça ${peca.nome}`}
+            largura={versaoAtiva?.largura_px ?? null}
+            altura={versaoAtiva?.altura_px ?? null}
+            alturaMaxima="70vh"
+            cursorCruz={podeComentar && !anotador.desenhando}
+            aoClicar={podeComentar ? (p) => setPin(p) : undefined}
+            vazio={<p className="p-10 text-sm text-muted-foreground">Sem arte nesta versão.</p>}
           >
-            {urlImagem ? (
-              <img
-                src={urlImagem}
-                alt={`Arte da peça ${peca.nome}`}
-                className="max-h-[70vh] w-full object-contain"
-              />
-            ) : (
-              <p className="p-10 text-sm text-muted-foreground">Sem arte nesta versão.</p>
-            )}
-
             {marcacaoVisivel && (
               <AnotacaoView
                 strokes={lerAnotacao(

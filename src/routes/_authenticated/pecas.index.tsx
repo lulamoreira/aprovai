@@ -132,7 +132,12 @@ interface Situacao {
   paradaMs: number | null;
 }
 
-function montarSituacao(peca: LinhaPeca, handoffs: LinhaHandoff[], agora: number): Situacao {
+function montarSituacao(
+  peca: LinhaPeca,
+  handoffs: LinhaHandoff[],
+  agora: number,
+  acessos: LinhaAcesso[],
+): Situacao {
   if (peca.status === "aprovada") {
     return {
       texto: `Aprovada em ${formatarData(peca.updated_at)}`,
@@ -162,9 +167,21 @@ function montarSituacao(peca: LinhaPeca, handoffs: LinhaHandoff[], agora: number
     ? `visto em ${formatarData(atual.visto_em)}`
     : "ainda não visto";
 
+  const placar =
+    peca.status === "aguardando_cliente" && (peca.modo_aprovacao ?? "todos") === "todos"
+      ? placarRodada(acessos)
+      : null;
+
+  const partes = [
+    `Enviada em ${formatarData(atual.enviado_em)}`,
+    visto,
+    `parada há ${duracaoHumana(agora - enviadoMs)}`,
+  ];
+  if (placar) partes.push(`${placar.aprovados} de ${placar.total} aprovaram`);
+
   return {
     texto: `De ${papelRotulo(atual.de_papel)} → ${papelRotulo(atual.para_papel)}`,
-    detalhe: `Enviada em ${formatarData(atual.enviado_em)} · ${visto} · parada há ${duracaoHumana(agora - enviadoMs)}`,
+    detalhe: partes.join(" · "),
     paradaMs: agora - enviadoMs,
   };
 }

@@ -210,7 +210,7 @@ function CentralPecas() {
         supabase
           .from("pecas")
           .select(
-            "id, nome, tamanho, status, versao_atual, thumb_url, updated_at, campanha_id, campanhas(nome, clientes(nome))",
+            "id, nome, tamanho, status, versao_atual, thumb_url, updated_at, campanha_id, modo_aprovacao, campanhas(nome, clientes(nome))",
           )
           .order("updated_at", { ascending: false })
           .order("id"),
@@ -229,6 +229,18 @@ function CentralPecas() {
       ),
   });
 
+  const { data: acessos = [] } = useQuery({
+    queryKey: ["pecas-acessos"],
+    queryFn: () =>
+      buscarTudo<LinhaAcesso>(() =>
+        supabase
+          .from("acessos_cliente")
+          .select("peca_id, handoff_id, decisao, criado_em")
+          .order("criado_em", { ascending: false })
+          .order("id"),
+      ),
+  });
+
   const porPeca = useMemo(() => {
     const mapa = new Map<string, LinhaHandoff[]>();
     for (const h of handoffs) {
@@ -238,6 +250,16 @@ function CentralPecas() {
     }
     return mapa;
   }, [handoffs]);
+
+  const acessosPorPeca = useMemo(() => {
+    const mapa = new Map<string, LinhaAcesso[]>();
+    for (const a of acessos) {
+      const lista = mapa.get(a.peca_id);
+      if (lista) lista.push(a);
+      else mapa.set(a.peca_id, [a]);
+    }
+    return mapa;
+  }, [acessos]);
 
   const campanhas = useMemo(() => {
     const mapa = new Map<string, string>();

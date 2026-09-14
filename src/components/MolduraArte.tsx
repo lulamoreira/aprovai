@@ -6,17 +6,17 @@ export interface MolduraArteProps {
   src: string | null;
   alt: string;
   /** Proporção conhecida da versão (peca_versoes.largura_px / altura_px). */
-  largura?: number | null;
-  altura?: number | null;
+  largura?: number | null | undefined;
+  altura?: number | null | undefined;
   /** Altura máxima da moldura (padrão 70vh). */
-  alturaMaxima?: string;
+  alturaMaxima?: string | undefined;
   /** Clique na arte: recebe coordenadas relativas 0..1 da ARTE. */
-  aoClicar?: (ponto: { x: number; y: number }) => void;
-  cursorCruz?: boolean;
-  vazio?: React.ReactNode;
-  className?: string;
+  aoClicar?: ((ponto: { x: number; y: number }) => void) | undefined;
+  cursorCruz?: boolean | undefined;
+  vazio?: React.ReactNode | undefined;
+  className?: string | undefined;
   /** Camadas sobrepostas (pins, anotações) — usam absolute inset-0. */
-  children?: React.ReactNode;
+  children?: React.ReactNode | undefined;
 }
 
 /**

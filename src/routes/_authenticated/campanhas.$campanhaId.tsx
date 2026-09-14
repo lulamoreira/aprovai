@@ -214,6 +214,7 @@ function QuadroCampanha() {
             </DialogContent>
           </Dialog>
         )}
+        </div>
       </div>
 
       {isLoading ? (

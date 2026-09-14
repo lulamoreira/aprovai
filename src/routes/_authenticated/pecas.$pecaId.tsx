@@ -64,6 +64,7 @@ import {
   lerAnotacao,
   useAnotador,
 } from "@/components/Anotacao";
+import { MolduraArte } from "@/components/MolduraArte";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/pecas/$pecaId")({
@@ -454,15 +455,6 @@ function TelaPeca() {
     }
   }
 
-  function clicarImagem(e: React.MouseEvent<HTMLDivElement>) {
-    if (!podeComentar) return;
-    const box = e.currentTarget.getBoundingClientRect();
-    setPin({
-      x: Number(((e.clientX - box.left) / box.width).toFixed(4)),
-      y: Number(((e.clientY - box.top) / box.height).toFixed(4)),
-    });
-  }
-
   if (isLoading) return <Skeleton className="h-[70vh] rounded-3xl" />;
   if (!peca) return <p className="text-sm text-muted-foreground">Peça não encontrada.</p>;
 
@@ -742,7 +734,7 @@ function TelaPeca() {
             altura={versaoAtiva?.altura_px ?? null}
             alturaMaxima="70vh"
             cursorCruz={podeComentar && !anotador.desenhando}
-            aoClicar={podeComentar ? (p) => setPin(p) : undefined}
+            aoClicar={podeComentar ? (p: { x: number; y: number }) => setPin(p) : undefined}
             vazio={<p className="p-10 text-sm text-muted-foreground">Sem arte nesta versão.</p>}
           >
             {marcacaoVisivel && (

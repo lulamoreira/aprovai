@@ -9,6 +9,7 @@ import {
   Lock,
   MessageCircle,
   MessageSquare,
+  Pencil,
   Send,
   ShieldCheck,
   Undo2,
@@ -729,6 +730,18 @@ function TelaPeca() {
                       <span className="rounded-full bg-cyan/25 px-2 py-0.5 font-medium text-cyan-foreground">
                         visível para o cliente
                       </span>
+                    )}
+                    {lerAnotacao(c.anotacao_json).length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setMarcacaoVisivel((atual) => (atual === c.id ? null : c.id))
+                        }
+                        className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 font-medium text-primary hover:bg-primary/25"
+                      >
+                        <Pencil className="size-3" />{" "}
+                        {marcacaoVisivel === c.id ? "ocultar marcação" : "ver marcação"}
+                      </button>
                     )}
                   </div>
                   <span className="sr-only">{i}</span>

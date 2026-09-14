@@ -19,6 +19,7 @@ import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated
 import { Route as AprovarTokenRouteImport } from './routes/aprovar.$token'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AuthenticatedCampanhasCampanhaIdRouteImport } from './routes/_authenticated/campanhas.$campanhaId'
+import { Route as AuthenticatedPecasIndexRouteImport } from './routes/_authenticated/pecas.index'
 import { Route as AuthenticatedPecasPecaIdRouteImport } from './routes/_authenticated/pecas.$pecaId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -72,6 +73,11 @@ const AuthenticatedCampanhasCampanhaIdRoute =
     path: '/campanhas/$campanhaId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPecasIndexRoute = AuthenticatedPecasIndexRouteImport.update({
+  id: '/pecas/',
+  path: '/pecas/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPecasPecaIdRoute =
   AuthenticatedPecasPecaIdRouteImport.update({
     id: '/pecas/$pecaId',
@@ -90,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/campanhas/$campanhaId': typeof AuthenticatedCampanhasCampanhaIdRoute
   '/pecas/$pecaId': typeof AuthenticatedPecasPecaIdRoute
+  '/pecas/': typeof AuthenticatedPecasIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/campanhas/$campanhaId': typeof AuthenticatedCampanhasCampanhaIdRoute
   '/pecas/$pecaId': typeof AuthenticatedPecasPecaIdRoute
+  '/pecas': typeof AuthenticatedPecasIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/_authenticated/campanhas/$campanhaId': typeof AuthenticatedCampanhasCampanhaIdRoute
   '/_authenticated/pecas/$pecaId': typeof AuthenticatedPecasPecaIdRoute
+  '/_authenticated/pecas/': typeof AuthenticatedPecasIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -130,6 +139,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/campanhas/$campanhaId'
     | '/pecas/$pecaId'
+    | '/pecas/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -142,6 +152,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/campanhas/$campanhaId'
     | '/pecas/$pecaId'
+    | '/pecas'
   id:
     | '__root__'
     | '/'
@@ -155,6 +166,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/_authenticated/campanhas/$campanhaId'
     | '/_authenticated/pecas/$pecaId'
+    | '/_authenticated/pecas/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -239,6 +251,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCampanhasCampanhaIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/pecas/': {
+      id: '/_authenticated/pecas/'
+      path: '/pecas'
+      fullPath: '/pecas/'
+      preLoaderRoute: typeof AuthenticatedPecasIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/pecas/$pecaId': {
       id: '/_authenticated/pecas/$pecaId'
       path: '/pecas/$pecaId'
@@ -254,6 +273,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedCampanhasCampanhaIdRoute: typeof AuthenticatedCampanhasCampanhaIdRoute
   AuthenticatedPecasPecaIdRoute: typeof AuthenticatedPecasPecaIdRoute
+  AuthenticatedPecasIndexRoute: typeof AuthenticatedPecasIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -261,6 +281,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedCampanhasCampanhaIdRoute: AuthenticatedCampanhasCampanhaIdRoute,
   AuthenticatedPecasPecaIdRoute: AuthenticatedPecasPecaIdRoute,
+  AuthenticatedPecasIndexRoute: AuthenticatedPecasIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

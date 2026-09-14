@@ -44,6 +44,22 @@ function Autenticacao() {
     if (session) window.location.replace(destino);
   }, [session, destino]);
 
+  async function entrarComGoogle() {
+    setEnviando(true);
+    try {
+      const retorno =
+        window.location.origin + "/auth?next=" + encodeURIComponent(destino);
+      const resultado = await lovable.auth.signInWithOAuth("google", { redirect_uri: retorno });
+      if (resultado.error) throw new Error("Não foi possível entrar com o Google.");
+      if (resultado.redirected) return;
+      window.location.replace(destino);
+    } catch (erro) {
+      toast.error(erro instanceof Error ? erro.message : "Não foi possível entrar com o Google.");
+    } finally {
+      setEnviando(false);
+    }
+  }
+
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
     setEnviando(true);

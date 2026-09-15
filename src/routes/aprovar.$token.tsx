@@ -103,6 +103,13 @@ const SELO_CASO: Record<StatusCaso, { rotulo: string; classe: string }> = {
   aprovada: { rotulo: "Aprovada", classe: "bg-success/25 text-success-foreground" },
 };
 
+const CASO_FUNDO: Record<StatusCaso, string> = {
+  aberta: "bg-warning/15",
+  feita: "bg-info/15",
+  revisada: "bg-cyan/15",
+  aprovada: "bg-success/15",
+};
+
 function TelaCliente() {
   const { token } = Route.useParams();
   const qc = useQueryClient();

@@ -842,17 +842,24 @@ function TelaCliente() {
                   </AlertDialogContent>
                 </AlertDialog>
               ) : (
-                <Button
-                  disabled
-                  className="flex-1 rounded-2xl"
-                  title={
-                    abertos.length > 0
-                      ? "Devolva seus pedidos para a agência corrigir."
-                      : "Decida cada marcação que voltou corrigida."
-                  }
-                >
-                  <CheckCircle2 className="mr-1 size-4" /> Aprovar tudo
-                </Button>
+                <div className="flex flex-1 flex-col gap-1">
+                  <Button
+                    disabled
+                    className="w-full rounded-2xl"
+                    title={
+                      abertos.length > 0
+                        ? "Há pedidos em aberto — use Devolver para correção."
+                        : "Decida cada marcação corrigida antes de aprovar."
+                    }
+                  >
+                    <CheckCircle2 className="mr-1 size-4" /> Aprovar tudo
+                  </Button>
+                  <p className="text-xs font-medium text-warning-foreground">
+                    {abertos.length > 0
+                      ? "Há pedidos em aberto — use “Devolver para correção”."
+                      : "Decida cada marcação corrigida antes de aprovar."}
+                  </p>
+                </div>
               )}
             </div>
           </div>

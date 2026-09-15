@@ -386,7 +386,11 @@ function TelaPeca() {
   function compartilharWhatsApp(token: string) {
     const link = linkAprovacao(token);
     const texto = `Olá! Você recebeu a peça "${peca?.nome ?? ""}" para aprovação. Acesse o link: ${link}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank", "noopener,noreferrer");
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(texto)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
   }
 
   function formatarValidade(iso: string): string {
@@ -494,8 +498,6 @@ function TelaPeca() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
-
-
 
   const recolher = useMutation({
     mutationFn: async () => {
@@ -809,7 +811,9 @@ function TelaPeca() {
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{contato?.nome ?? "Aprovador"}</p>
-                    <p className="truncate text-xs text-muted-foreground">{contato?.email ?? "—"}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {contato?.email ?? "—"}
+                    </p>
                     {ultimoLembrete && (
                       <p className="mt-1 text-xs text-muted-foreground">
                         Cobrado por {ultimoLembrete.nome_cobrador ?? "Equipe"} em{" "}
@@ -850,7 +854,6 @@ function TelaPeca() {
           </ul>
         </section>
       )}
-
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_400px]">
         <section className="rounded-3xl border bg-card p-4 shadow-soft">
@@ -944,121 +947,122 @@ function TelaPeca() {
                   ? (SELO_CASO[(c.status_caso as StatusCaso) ?? "aberta"] ?? SELO_CASO.aberta)
                   : null;
                 return (
-                <article
-                  key={c.id}
-                  className={cn(
-                    "rounded-2xl border bg-background p-3",
-                    c.eh_caso && "border-2 border-primary/40",
-                  )}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold">
-                      {c.pin_x != null && (
-                        <span className="mr-1 rounded-full bg-primary px-1.5 text-xs text-primary-foreground">
-                          {pins.findIndex((p) => p.id === c.id) + 1}
+                  <article
+                    key={c.id}
+                    className={cn(
+                      "rounded-2xl border bg-background p-3",
+                      c.eh_caso && "border-2 border-primary/40",
+                    )}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-semibold">
+                        {c.pin_x != null && (
+                          <span className="mr-1 rounded-full bg-primary px-1.5 text-xs text-primary-foreground">
+                            {pins.findIndex((p) => p.id === c.id) + 1}
+                          </span>
+                        )}
+                        {PAPEL_LABEL[c.autor_papel]}
+                        {selo && (
+                          <span
+                            className={cn(
+                              "ml-2 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                              selo.classe,
+                            )}
+                          >
+                            {selo.rotulo}
+                          </span>
+                        )}
+                      </p>
+                      <span className="text-xs text-muted-foreground">
+                        {formatarData(c.created_at)}
+                      </span>
+                    </div>
+                    <p className="mt-1 whitespace-pre-wrap text-sm">{c.texto}</p>
+                    {c.texto_original && c.texto_original !== c.texto && (
+                      <p className="mt-1 text-xs text-muted-foreground line-through">
+                        antes: {c.texto_original}
+                      </p>
+                    )}
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
+                      {c.editavel ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-success/20 px-2 py-0.5 font-medium text-success-foreground">
+                          <Eye className="size-3" /> Ainda não visto — pode editar
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 font-medium text-muted-foreground">
+                          <Lock className="size-3" /> Visto em {formatarData(c.locked_em)} —
+                          bloqueado
                         </span>
                       )}
-                      {PAPEL_LABEL[c.autor_papel]}
-                      {selo && (
-                        <span
-                          className={cn(
-                            "ml-2 rounded-full px-2 py-0.5 text-[11px] font-semibold",
-                            selo.classe,
-                          )}
+                      {c.edicao_autorizada && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-warning/25 px-2 py-0.5 font-medium text-warning-foreground">
+                          <ShieldCheck className="size-3" /> Edição autorizada pelo atendimento
+                        </span>
+                      )}
+                      {c.autor_papel === "atendimento" && c.visivel_para_cliente && (
+                        <span className="rounded-full bg-cyan/25 px-2 py-0.5 font-medium text-cyan-foreground">
+                          visível para o cliente
+                        </span>
+                      )}
+                      {lerAnotacao(c.anotacao_json).length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setMarcacaoVisivel((atual) => (atual === c.id ? null : c.id))
+                          }
+                          className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 font-medium text-primary hover:bg-primary/25"
                         >
-                          {selo.rotulo}
-                        </span>
-                      )}
-                    </p>
-                    <span className="text-xs text-muted-foreground">
-                      {formatarData(c.created_at)}
-                    </span>
-                  </div>
-                  <p className="mt-1 whitespace-pre-wrap text-sm">{c.texto}</p>
-                  {c.texto_original && c.texto_original !== c.texto && (
-                    <p className="mt-1 text-xs text-muted-foreground line-through">
-                      antes: {c.texto_original}
-                    </p>
-                  )}
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
-                    {c.editavel ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-success/20 px-2 py-0.5 font-medium text-success-foreground">
-                        <Eye className="size-3" /> Ainda não visto — pode editar
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 font-medium text-muted-foreground">
-                        <Lock className="size-3" /> Visto em {formatarData(c.locked_em)} — bloqueado
-                      </span>
-                    )}
-                    {c.edicao_autorizada && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-warning/25 px-2 py-0.5 font-medium text-warning-foreground">
-                        <ShieldCheck className="size-3" /> Edição autorizada pelo atendimento
-                      </span>
-                    )}
-                    {c.autor_papel === "atendimento" && c.visivel_para_cliente && (
-                      <span className="rounded-full bg-cyan/25 px-2 py-0.5 font-medium text-cyan-foreground">
-                        visível para o cliente
-                      </span>
-                    )}
-                    {lerAnotacao(c.anotacao_json).length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setMarcacaoVisivel((atual) => (atual === c.id ? null : c.id))
-                        }
-                        className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 font-medium text-primary hover:bg-primary/25"
-                      >
-                        <Pencil className="size-3" />{" "}
-                        {marcacaoVisivel === c.id ? "ocultar marcação" : "ver marcação"}
-                      </button>
-                    )}
-                  </div>
-
-                  {c.eh_caso && souCriacao && status === "criacao_ajustando" && (
-                    <label className="mt-3 flex cursor-pointer items-center gap-2 rounded-xl bg-muted/50 p-2">
-                      <Checkbox
-                        checked={c.status_caso !== "aberta"}
-                        disabled={marcarFeito.isPending}
-                        onCheckedChange={(v) =>
-                          marcarFeito.mutate({ id: c.id, feito: v === true })
-                        }
-                      />
-                      <span className="text-xs font-medium">
-                        Já corrigi
-                        {c.feito_em ? ` · marcado em ${formatarData(c.feito_em)}` : ""}
-                      </span>
-                    </label>
-                  )}
-
-                  {c.eh_caso && souAtendimento && status === "aguardando_atendimento" && (
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <Button
-                        size="sm"
-                        className="rounded-xl bg-success text-success-foreground hover:opacity-90"
-                        disabled={revisarCaso.isPending || c.status_caso === "revisada"}
-                        onClick={() => revisarCaso.mutate({ id: c.id, ok: true })}
-                      >
-                        <CheckCircle2 className="mr-1 size-4" /> Revisado ✓
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="rounded-xl"
-                        disabled={revisarCaso.isPending || c.status_caso === "aberta"}
-                        onClick={() => revisarCaso.mutate({ id: c.id, ok: false })}
-                      >
-                        <Undo2 className="mr-1 size-4" /> Não feito
-                      </Button>
-                      {c.revisado_em && (
-                        <span className="text-[11px] text-muted-foreground">
-                          revisado em {formatarData(c.revisado_em)}
-                        </span>
+                          <Pencil className="size-3" />{" "}
+                          {marcacaoVisivel === c.id ? "ocultar marcação" : "ver marcação"}
+                        </button>
                       )}
                     </div>
-                  )}
 
-                  <span className="sr-only">{i}</span>
-                </article>
+                    {c.eh_caso && souCriacao && status === "criacao_ajustando" && (
+                      <label className="mt-3 flex cursor-pointer items-center gap-2 rounded-xl bg-muted/50 p-2">
+                        <Checkbox
+                          checked={c.status_caso !== "aberta"}
+                          disabled={marcarFeito.isPending}
+                          onCheckedChange={(v) =>
+                            marcarFeito.mutate({ id: c.id, feito: v === true })
+                          }
+                        />
+                        <span className="text-xs font-medium">
+                          Já corrigi
+                          {c.feito_em ? ` · marcado em ${formatarData(c.feito_em)}` : ""}
+                        </span>
+                      </label>
+                    )}
+
+                    {c.eh_caso && souAtendimento && status === "aguardando_atendimento" && (
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <Button
+                          size="sm"
+                          className="rounded-xl bg-success text-success-foreground hover:opacity-90"
+                          disabled={revisarCaso.isPending || c.status_caso === "revisada"}
+                          onClick={() => revisarCaso.mutate({ id: c.id, ok: true })}
+                        >
+                          <CheckCircle2 className="mr-1 size-4" /> Revisado ✓
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="rounded-xl"
+                          disabled={revisarCaso.isPending || c.status_caso === "aberta"}
+                          onClick={() => revisarCaso.mutate({ id: c.id, ok: false })}
+                        >
+                          <Undo2 className="mr-1 size-4" /> Não feito
+                        </Button>
+                        {c.revisado_em && (
+                          <span className="text-[11px] text-muted-foreground">
+                            revisado em {formatarData(c.revisado_em)}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    <span className="sr-only">{i}</span>
+                  </article>
                 );
               })}
 

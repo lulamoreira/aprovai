@@ -804,17 +804,30 @@ function TelaCliente() {
                         A aprovação é definitiva e libera a peça para produção.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel className="rounded-2xl">Cancelar</AlertDialogCancel>
-                    <AlertDialogAction
-                      className="rounded-2xl"
-                      onClick={() => aprovarTudo.mutate()}
-                    >
-                      Aprovar
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="rounded-2xl">Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="rounded-2xl"
+                        onClick={() => aprovarTudo.mutate()}
+                      >
+                        Aprovar
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              ) : (
+                <Button
+                  disabled
+                  className="flex-1 rounded-2xl"
+                  title={
+                    abertos.length > 0
+                      ? "Devolva seus pedidos para a agência corrigir."
+                      : "Decida cada marcação que voltou corrigida."
+                  }
+                >
+                  <CheckCircle2 className="mr-1 size-4" /> Aprovar tudo
+                </Button>
+              )}
             </div>
           </div>
         </div>

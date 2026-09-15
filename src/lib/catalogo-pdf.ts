@@ -78,8 +78,10 @@ async function miniaturaComprimida(
 ): Promise<{ dataUrl: string; largura: number; altura: number } | null> {
   if (!path) return null;
   try {
-    const { data } = supabase.storage.from("peca-imagens").getPublicUrl(path);
-    if (!data?.publicUrl) return null;
+    const { data, error } = await supabase.storage
+      .from("peca-imagens")
+      .createSignedUrl(path, 3600);
+    if (error || !data?.signedUrl) return null;
 
     const img = await new Promise<HTMLImageElement>((resolve, reject) => {
       const el = new Image();

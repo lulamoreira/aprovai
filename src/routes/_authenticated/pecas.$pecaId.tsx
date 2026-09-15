@@ -1013,9 +1013,54 @@ function TelaPeca() {
                       </button>
                     )}
                   </div>
+
+                  {c.eh_caso && souCriacao && status === "criacao_ajustando" && (
+                    <label className="mt-3 flex cursor-pointer items-center gap-2 rounded-xl bg-muted/50 p-2">
+                      <Checkbox
+                        checked={c.status_caso !== "aberta"}
+                        disabled={marcarFeito.isPending}
+                        onCheckedChange={(v) =>
+                          marcarFeito.mutate({ id: c.id, feito: v === true })
+                        }
+                      />
+                      <span className="text-xs font-medium">
+                        Já corrigi
+                        {c.feito_em ? ` · marcado em ${formatarData(c.feito_em)}` : ""}
+                      </span>
+                    </label>
+                  )}
+
+                  {c.eh_caso && souAtendimento && status === "aguardando_atendimento" && (
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <Button
+                        size="sm"
+                        className="rounded-xl bg-success text-success-foreground hover:opacity-90"
+                        disabled={revisarCaso.isPending || c.status_caso === "revisada"}
+                        onClick={() => revisarCaso.mutate({ id: c.id, ok: true })}
+                      >
+                        <CheckCircle2 className="mr-1 size-4" /> Revisado ✓
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-xl"
+                        disabled={revisarCaso.isPending || c.status_caso === "aberta"}
+                        onClick={() => revisarCaso.mutate({ id: c.id, ok: false })}
+                      >
+                        <Undo2 className="mr-1 size-4" /> Não feito
+                      </Button>
+                      {c.revisado_em && (
+                        <span className="text-[11px] text-muted-foreground">
+                          revisado em {formatarData(c.revisado_em)}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
                   <span className="sr-only">{i}</span>
                 </article>
-              ))}
+                );
+              })}
 
               {podeComentar && (
                 <div className="space-y-2 rounded-2xl border bg-background p-3">

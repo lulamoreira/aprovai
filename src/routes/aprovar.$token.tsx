@@ -315,6 +315,10 @@ function TelaCliente() {
     );
   }
 
+  if (precisaCodigo) {
+    return <PedirCodigo token={token} />;
+  }
+
   if (error || !data) {
     return (
       <div className="flex min-h-screen items-center justify-center px-6 text-center">

@@ -759,18 +759,24 @@ function TelaCliente() {
                 placeholder="Um recado geral para a agência (não vira marcação)..."
                 className="min-h-20 rounded-xl"
               />
-              <div className="flex justify-end">
+              <div className="flex flex-col items-end gap-1">
                 <Button
                   size="sm"
                   variant="outline"
                   className="rounded-xl"
                   disabled={!textoGeral.trim() || comentar.isPending}
+                  title={!textoGeral.trim() ? "Escreva algo primeiro." : undefined}
                   onClick={() =>
                     comentar.mutate({ texto: textoGeral, ehCaso: false, comDesenho: false })
                   }
                 >
                   Enviar comentário
                 </Button>
+                {!textoGeral.trim() && (
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Escreva algo primeiro.
+                  </p>
+                )}
               </div>
             </div>
           )}

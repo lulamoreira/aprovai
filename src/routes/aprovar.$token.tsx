@@ -750,11 +750,19 @@ function TelaCliente() {
       {aberta && (
         <div className="fixed inset-x-0 bottom-0 border-t bg-card/95 p-4 backdrop-blur">
           <div className="mx-auto max-w-3xl space-y-2">
-            {abertos.length > 0 && (
+            {abertos.length > 0 ? (
               <p className="text-center text-xs font-medium text-warning-foreground">
-                Faltam decidir {abertos.length} marcaç{abertos.length === 1 ? "ão" : "ões"} (
-                {abertos.map((c) => `#${casos.indexOf(c) + 1}`).join(", ")}).
+                Você tem {abertos.length} pedido{abertos.length === 1 ? "" : "s"} de correção (
+                {abertos.map((c) => `#${casos.indexOf(c) + 1}`).join(", ")}). Devolva para a agência
+                corrigir.
               </p>
+            ) : (
+              aDecidir.length > 0 && (
+                <p className="text-center text-xs font-medium text-warning-foreground">
+                  Decida cada marcação que voltou corrigida (
+                  {aDecidir.map((c) => `#${casos.indexOf(c) + 1}`).join(", ")}) antes de finalizar.
+                </p>
+              )
             )}
             <div className="flex gap-3">
               {abertos.length > 0 && (

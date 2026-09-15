@@ -194,6 +194,18 @@ function TelaCliente() {
   const pins = data.comentarios.filter(
     (c) => c.versao_id === versaoAtual?.id && c.pin_x != null && c.pin_y != null,
   );
+  /** Marcações do próprio aprovador nesta versão (salvas) ou desenho ainda não enviado. */
+  const tenhoMarcacao =
+    anotador.strokes.length > 0 ||
+    data.comentarios.some(
+      (c) =>
+        c.autor_cliente_contato_id === data.contato.id &&
+        (c.versao_id === versaoAtual?.id || (!versaoAtual && c.versao_id === null)),
+    );
+  const rotuloDevolver =
+    modo === "um"
+      ? "Voltar para o atendimento"
+      : "Aguardar o(s) outro(s) e enviar para o atendimento";
 
   return (
     <div className="min-h-screen bg-background pb-28">

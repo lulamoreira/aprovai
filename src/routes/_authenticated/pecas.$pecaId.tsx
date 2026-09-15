@@ -939,8 +939,18 @@ function TelaPeca() {
                   Nenhum comentário nesta versão.
                 </p>
               )}
-              {comentariosVersao.map((c, i) => (
-                <article key={c.id} className="rounded-2xl border bg-background p-3">
+              {comentariosVersao.map((c, i) => {
+                const selo = c.eh_caso
+                  ? (SELO_CASO[(c.status_caso as StatusCaso) ?? "aberta"] ?? SELO_CASO.aberta)
+                  : null;
+                return (
+                <article
+                  key={c.id}
+                  className={cn(
+                    "rounded-2xl border bg-background p-3",
+                    c.eh_caso && "border-2 border-primary/40",
+                  )}
+                >
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-semibold">
                       {c.pin_x != null && (
@@ -949,6 +959,16 @@ function TelaPeca() {
                         </span>
                       )}
                       {PAPEL_LABEL[c.autor_papel]}
+                      {selo && (
+                        <span
+                          className={cn(
+                            "ml-2 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                            selo.classe,
+                          )}
+                        >
+                          {selo.rotulo}
+                        </span>
+                      )}
                     </p>
                     <span className="text-xs text-muted-foreground">
                       {formatarData(c.created_at)}

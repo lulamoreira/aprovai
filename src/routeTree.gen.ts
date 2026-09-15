@@ -22,6 +22,7 @@ import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.
 import { Route as AuthenticatedCampanhasCampanhaIdRouteImport } from './routes/_authenticated/campanhas.$campanhaId'
 import { Route as AuthenticatedPecasIndexRouteImport } from './routes/_authenticated/pecas.index'
 import { Route as AuthenticatedPecasPecaIdRouteImport } from './routes/_authenticated/pecas.$pecaId'
+import { Route as ApiPublicDiagnosticoEmailRouteImport } from './routes/api/public/diagnostico-email'
 import { Route as ApiPublicNotificacaoEmailRouteImport } from './routes/api/public/notificacao-email'
 import { Route as ApiPublicTestarEmailRouteImport } from './routes/api/public/testar-email'
 
@@ -92,6 +93,12 @@ const AuthenticatedPecasPecaIdRoute =
     path: '/pecas/$pecaId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicDiagnosticoEmailRoute =
+  ApiPublicDiagnosticoEmailRouteImport.update({
+    id: '/api/public/diagnostico-email',
+    path: '/api/public/diagnostico-email',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicNotificacaoEmailRoute =
   ApiPublicNotificacaoEmailRouteImport.update({
     id: '/api/public/notificacao-email',
@@ -116,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/campanhas/$campanhaId': typeof AuthenticatedCampanhasCampanhaIdRoute
   '/pecas/$pecaId': typeof AuthenticatedPecasPecaIdRoute
+  '/api/public/diagnostico-email': typeof ApiPublicDiagnosticoEmailRoute
   '/api/public/notificacao-email': typeof ApiPublicNotificacaoEmailRoute
   '/api/public/testar-email': typeof ApiPublicTestarEmailRoute
   '/pecas/': typeof AuthenticatedPecasIndexRoute
@@ -132,6 +140,7 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/campanhas/$campanhaId': typeof AuthenticatedCampanhasCampanhaIdRoute
   '/pecas/$pecaId': typeof AuthenticatedPecasPecaIdRoute
+  '/api/public/diagnostico-email': typeof ApiPublicDiagnosticoEmailRoute
   '/api/public/notificacao-email': typeof ApiPublicNotificacaoEmailRoute
   '/api/public/testar-email': typeof ApiPublicTestarEmailRoute
   '/pecas': typeof AuthenticatedPecasIndexRoute
@@ -150,6 +159,7 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/_authenticated/campanhas/$campanhaId': typeof AuthenticatedCampanhasCampanhaIdRoute
   '/_authenticated/pecas/$pecaId': typeof AuthenticatedPecasPecaIdRoute
+  '/api/public/diagnostico-email': typeof ApiPublicDiagnosticoEmailRoute
   '/api/public/notificacao-email': typeof ApiPublicNotificacaoEmailRoute
   '/api/public/testar-email': typeof ApiPublicTestarEmailRoute
   '/_authenticated/pecas/': typeof AuthenticatedPecasIndexRoute
@@ -168,6 +178,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/campanhas/$campanhaId'
     | '/pecas/$pecaId'
+    | '/api/public/diagnostico-email'
     | '/api/public/notificacao-email'
     | '/api/public/testar-email'
     | '/pecas/'
@@ -184,6 +195,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/campanhas/$campanhaId'
     | '/pecas/$pecaId'
+    | '/api/public/diagnostico-email'
     | '/api/public/notificacao-email'
     | '/api/public/testar-email'
     | '/pecas'
@@ -201,6 +213,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/_authenticated/campanhas/$campanhaId'
     | '/_authenticated/pecas/$pecaId'
+    | '/api/public/diagnostico-email'
     | '/api/public/notificacao-email'
     | '/api/public/testar-email'
     | '/_authenticated/pecas/'
@@ -215,6 +228,7 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   AprovarTokenRoute: typeof AprovarTokenRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
+  ApiPublicDiagnosticoEmailRoute: typeof ApiPublicDiagnosticoEmailRoute
   ApiPublicNotificacaoEmailRoute: typeof ApiPublicNotificacaoEmailRoute
   ApiPublicTestarEmailRoute: typeof ApiPublicTestarEmailRoute
 }
@@ -312,6 +326,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPecasPecaIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/diagnostico-email': {
+      id: '/api/public/diagnostico-email'
+      path: '/api/public/diagnostico-email'
+      fullPath: '/api/public/diagnostico-email'
+      preLoaderRoute: typeof ApiPublicDiagnosticoEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/notificacao-email': {
       id: '/api/public/notificacao-email'
       path: '/api/public/notificacao-email'
@@ -358,6 +379,7 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   AprovarTokenRoute: AprovarTokenRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
+  ApiPublicDiagnosticoEmailRoute: ApiPublicDiagnosticoEmailRoute,
   ApiPublicNotificacaoEmailRoute: ApiPublicNotificacaoEmailRoute,
   ApiPublicTestarEmailRoute: ApiPublicTestarEmailRoute,
 }

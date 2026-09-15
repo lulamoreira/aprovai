@@ -1200,14 +1200,20 @@ function TelaPeca() {
             placeholder="Ex.: cliente pediu para corrigir o preço informado por engano."
             className="min-h-24 rounded-2xl"
           />
-          <DialogFooter>
+          <DialogFooter className="sm:flex-col sm:items-end sm:gap-1">
             <Button
               disabled={!motivo.trim() || autorizar.isPending}
+              title={!motivo.trim() ? "Escreva o motivo primeiro." : undefined}
               onClick={() => autorizar.mutate()}
               className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
             >
               Liberar edição
             </Button>
+            {!motivo.trim() && (
+              <p className="text-xs font-medium text-muted-foreground">
+                Escreva o motivo primeiro para liberar a edição.
+              </p>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

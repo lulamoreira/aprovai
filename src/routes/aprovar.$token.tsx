@@ -176,7 +176,7 @@ function TelaCliente() {
   });
 
   const decidirCaso = useMutation({
-    mutationFn: async (entrada: { id: string; decisao: "aprovar" | "reabrir" }) => {
+    mutationFn: async (entrada: { id: string; decisao: "aprovar" }) => {
       const { error: erro } = await supabase.rpc("cliente_decidir_caso", {
         p_token: token,
         p_comentario_id: entrada.id,
@@ -184,8 +184,69 @@ function TelaCliente() {
       });
       if (erro) throw erro;
     },
-    onSuccess: (_d, entrada) => {
-      toast.success(entrada.decisao === "aprovar" ? "Marcação aprovada." : "Marcação reaberta.");
+    onSuccess: () => {
+      toast.success("Marcação aprovada.");
+      invalidar();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  /** Reabre uma marcação corrigida e registra o que ainda falta. */
+  const pedirCorrecao = useMutation({
+    mutationFn: async (entrada: { id: string; numero: number; texto: string }) => {
+      const { error: erro } = await supabase.rpc("cliente_decidir_caso", {
+        p_token: token,
+        p_comentario_id: entrada.id,
+        p_decisao: "pedir_correcao",
+      });
+      if (erro) throw erro;
+      const complemento = entrada.texto.trim();
+      if (complemento) {
+        const { error: erro2 } = await supabase.rpc("cliente_comentar", {
+          p_token: token,
+          p_texto: `Sobre a marcação ${entrada.numero}: ${complemento}`,
+          p_eh_caso: false,
+        });
+        if (erro2) throw erro2;
+      }
+    },
+    onSuccess: () => {
+      setCorrigindo(null);
+      setTextoCorrecao("");
+      toast.success("Pedido de correção registrado.");
+      invalidar();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const editarCaso = useMutation({
+    mutationFn: async (entrada: { id: string; texto: string }) => {
+      const { error: erro } = await supabase.rpc("cliente_editar_comentario", {
+        p_token: token,
+        p_comentario_id: entrada.id,
+        p_texto: entrada.texto.trim(),
+      });
+      if (erro) throw erro;
+    },
+    onSuccess: () => {
+      setEditando(null);
+      setTextoEdicao("");
+      toast.success("Marcação atualizada.");
+      invalidar();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const removerCaso = useMutation({
+    mutationFn: async (id: string) => {
+      const { error: erro } = await supabase.rpc("cliente_remover_caso", {
+        p_token: token,
+        p_comentario_id: id,
+      });
+      if (erro) throw erro;
+    },
+    onSuccess: () => {
+      toast.success("Marcação removida.");
       invalidar();
     },
     onError: (e: Error) => toast.error(e.message),

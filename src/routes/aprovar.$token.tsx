@@ -696,16 +696,22 @@ function TelaCliente() {
                     Toque na arte para marcar o ponto
                   </span>
                 )}
-                <Button
-                  size="sm"
-                  className="gradient-brand rounded-xl text-primary-foreground"
-                  disabled={!texto.trim() || comentar.isPending}
-                  onClick={() =>
-                    comentar.mutate({ texto, ehCaso: true, comDesenho: true })
-                  }
-                >
-                  Criar marcação
-                </Button>
+                <div className="flex flex-col items-end gap-1">
+                  <Button
+                    size="sm"
+                    className="gradient-brand rounded-xl text-primary-foreground"
+                    disabled={!texto.trim() || comentar.isPending}
+                    title={!texto.trim() ? "Escreva algo primeiro." : undefined}
+                    onClick={() => comentar.mutate({ texto, ehCaso: true, comDesenho: true })}
+                  >
+                    Criar marcação
+                  </Button>
+                  {!texto.trim() && (
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Escreva algo primeiro.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           )}

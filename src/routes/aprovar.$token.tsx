@@ -70,6 +70,7 @@ interface RespostaCliente {
     id: string;
     versao_id: string | null;
     autor_papel: "criacao" | "atendimento" | "cliente";
+    autor_cliente_contato_id: string | null;
     texto: string;
     pin_x: number | null;
     pin_y: number | null;
@@ -193,6 +194,18 @@ function TelaCliente() {
   const pins = data.comentarios.filter(
     (c) => c.versao_id === versaoAtual?.id && c.pin_x != null && c.pin_y != null,
   );
+  /** Marcações do próprio aprovador nesta versão (salvas) ou desenho ainda não enviado. */
+  const tenhoMarcacao =
+    anotador.strokes.length > 0 ||
+    data.comentarios.some(
+      (c) =>
+        c.autor_cliente_contato_id === data.contato.id &&
+        (c.versao_id === versaoAtual?.id || (!versaoAtual && c.versao_id === null)),
+    );
+  const rotuloDevolver =
+    modo === "um"
+      ? "Voltar para o atendimento"
+      : "Aguardar o(s) outro(s) e enviar para o atendimento";
 
   return (
     <div className="min-h-screen bg-background pb-28">
@@ -360,13 +373,20 @@ function TelaCliente() {
           <div className="mx-auto flex max-w-3xl gap-3">
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" className="flex-1 rounded-2xl">
-                  <Undo2 className="mr-1 size-4" /> Devolver com comentários
+                <Button
+                  variant={tenhoMarcacao ? "default" : "outline"}
+                  className={cn(
+                    "flex-1 rounded-2xl",
+                    tenhoMarcacao && "gradient-brand text-primary-foreground hover:opacity-95",
+                  )}
+                >
+                  <Undo2 className="mr-1 size-4" />{" "}
+                  {tenhoMarcacao ? rotuloDevolver : "Devolver com comentários"}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent className="rounded-3xl">
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Devolver para ajustes?</AlertDialogTitle>
+                  <AlertDialogTitle>Enviar para o atendimento?</AlertDialogTitle>
                   <AlertDialogDescription>
                     Seus comentários vão para a agência e ficam bloqueados para edição depois que
                     forem lidos.
@@ -375,33 +395,35 @@ function TelaCliente() {
                 <AlertDialogFooter>
                   <AlertDialogCancel className="rounded-2xl">Cancelar</AlertDialogCancel>
                   <AlertDialogAction className="rounded-2xl" onClick={() => devolver.mutate()}>
-                    Devolver
+                    Enviar
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
 
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button className="gradient-brand flex-1 rounded-2xl text-primary-foreground hover:opacity-95">
-                  <CheckCircle2 className="mr-1 size-4" /> Aprovar peça
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="rounded-3xl">
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Aprovar esta peça?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    A aprovação é definitiva e libera a peça para produção.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel className="rounded-2xl">Cancelar</AlertDialogCancel>
-                  <AlertDialogAction className="rounded-2xl" onClick={() => aprovar.mutate()}>
-                    Aprovar
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            {!tenhoMarcacao && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button className="gradient-brand flex-1 rounded-2xl text-primary-foreground hover:opacity-95">
+                    <CheckCircle2 className="mr-1 size-4" /> Aprovar peça
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="rounded-3xl">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Aprovar esta peça?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      A aprovação é definitiva e libera a peça para produção.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="rounded-2xl">Cancelar</AlertDialogCancel>
+                    <AlertDialogAction className="rounded-2xl" onClick={() => aprovar.mutate()}>
+                      Aprovar
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
         </div>
       )}

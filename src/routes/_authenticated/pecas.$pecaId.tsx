@@ -132,6 +132,13 @@ const SELO_CASO: Record<StatusCaso, { rotulo: string; classe: string }> = {
   revisada: { rotulo: "Revisada", classe: "bg-cyan/25 text-cyan-foreground" },
   aprovada: { rotulo: "Aprovada", classe: "bg-success/25 text-success-foreground" },
 };
+
+const CASO_FUNDO: Record<StatusCaso, string> = {
+  aberta: "bg-warning/15",
+  feita: "bg-info/15",
+  revisada: "bg-cyan/15",
+  aprovada: "bg-success/15",
+};
 interface Handoff {
   id: string;
   de_papel: string;

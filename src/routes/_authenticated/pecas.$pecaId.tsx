@@ -160,6 +160,13 @@ interface Acesso {
   decidido_em: string | null;
   cliente_contatos: { nome: string; email: string } | null;
 }
+interface Cobranca {
+  id: string;
+  cliente_contato_id: string | null;
+  cobrado_por: string | null;
+  criado_em: string;
+  nome_cobrador?: string | null;
+}
 
 function TelaPeca() {
   const { pecaId } = Route.useParams();

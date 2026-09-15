@@ -790,21 +790,20 @@ function TelaCliente() {
                 </AlertDialog>
               )}
 
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button className="gradient-brand flex-1 rounded-2xl text-primary-foreground hover:opacity-95">
-                    <CheckCircle2 className="mr-1 size-4" /> Aprovar tudo
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent className="rounded-3xl">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Aprovar esta peça?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {abertos.length > 0
-                        ? `Todas as ${abertos.length} marcações abertas serão dadas como aprovadas e a peça segue para produção. A aprovação é definitiva.`
-                        : "A aprovação é definitiva e libera a peça para produção."}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
+              {podeAprovarTudo ? (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button className="gradient-brand flex-1 rounded-2xl text-primary-foreground hover:opacity-95">
+                      <CheckCircle2 className="mr-1 size-4" /> Aprovar tudo
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="rounded-3xl">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Aprovar esta peça?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        A aprovação é definitiva e libera a peça para produção.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel className="rounded-2xl">Cancelar</AlertDialogCancel>
                     <AlertDialogAction

@@ -800,6 +800,8 @@ function TelaPeca() {
                   : a.decisao === "devolvido"
                     ? `devolveu em ${formatarData(a.decidido_em)}`
                     : "pendente";
+              const lembretes = cobrancasDe(a.cliente_contato_id);
+              const ultimoLembrete = lembretes[0];
               return (
                 <li
                   key={a.id}
@@ -808,6 +810,13 @@ function TelaPeca() {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{contato?.nome ?? "Aprovador"}</p>
                     <p className="truncate text-xs text-muted-foreground">{contato?.email ?? "—"}</p>
+                    {ultimoLembrete && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Cobrado por {ultimoLembrete.nome_cobrador ?? "Equipe"} em{" "}
+                        {formatarData(ultimoLembrete.criado_em)}
+                        {lembretes.length > 1 ? ` · ${lembretes.length} lembretes` : ""}
+                      </p>
+                    )}
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <span

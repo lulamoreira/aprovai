@@ -101,6 +101,8 @@ interface Versao {
   largura_px: number | null;
   altura_px: number | null;
 }
+type StatusCaso = "aberta" | "feita" | "revisada" | "aprovada";
+
 interface Comentario {
   id: string;
   versao_id: string | null;
@@ -117,7 +119,19 @@ interface Comentario {
   edicao_autorizada: boolean;
   locked_em: string | null;
   created_at: string;
+  /** Marcação do cliente que vira um caso com status próprio. */
+  eh_caso: boolean | null;
+  status_caso: string | null;
+  feito_em: string | null;
+  revisado_em: string | null;
 }
+
+const SELO_CASO: Record<StatusCaso, { rotulo: string; classe: string }> = {
+  aberta: { rotulo: "Aberta", classe: "bg-warning/25 text-warning-foreground" },
+  feita: { rotulo: "Ajuste feito", classe: "bg-info/25 text-info-foreground" },
+  revisada: { rotulo: "Revisada", classe: "bg-cyan/25 text-cyan-foreground" },
+  aprovada: { rotulo: "Aprovada", classe: "bg-success/25 text-success-foreground" },
+};
 interface Handoff {
   id: string;
   de_papel: string;
@@ -145,6 +159,13 @@ interface Acesso {
   decisao: string | null;
   decidido_em: string | null;
   cliente_contatos: { nome: string; email: string } | null;
+}
+interface Cobranca {
+  id: string;
+  cliente_contato_id: string | null;
+  cobrado_por: string | null;
+  criado_em: string;
+  nome_cobrador?: string | null;
 }
 
 function TelaPeca() {
@@ -189,7 +210,7 @@ function TelaPeca() {
         supabase
           .from("comentarios")
           .select(
-            "id, versao_id, handoff_id, autor_user_id, autor_papel, texto, texto_original, pin_x, pin_y, anotacao_json, visivel_para_cliente, editavel, edicao_autorizada, locked_em, created_at",
+            "id, versao_id, handoff_id, autor_user_id, autor_papel, texto, texto_original, pin_x, pin_y, anotacao_json, visivel_para_cliente, editavel, edicao_autorizada, locked_em, created_at, eh_caso, status_caso, feito_em, revisado_em",
           )
           .eq("peca_id", pecaId)
           .order("created_at", { ascending: true })
@@ -234,6 +255,9 @@ function TelaPeca() {
     (c) => c.versao_id === versaoAtiva?.id,
   );
   const pins = comentariosVersao.filter((c) => c.pin_x != null && c.pin_y != null);
+  /** Marcações do cliente nesta versão, cada uma com decisão própria. */
+  const casos = comentariosVersao.filter((c) => c.eh_caso);
+  const casosAbertos = casos.filter((c) => c.status_caso === "aberta");
   const ultimoHandoff = (data?.handoffs ?? []).find((h) => !h.recolhido_em) ?? null;
   const podeRecolher =
     !!ultimoHandoff &&
@@ -300,6 +324,39 @@ function TelaPeca() {
     (a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime(),
   );
 
+  const { data: cobrancas = [] } = useQuery({
+    queryKey: ["cobrancas", pecaId],
+    enabled: status === "aguardando_cliente" && souAtendimento,
+    queryFn: async () => {
+      const linhas = await buscarTudo<Cobranca>(() =>
+        supabase
+          .from("cobrancas")
+          .select("id, cliente_contato_id, cobrado_por, criado_em")
+          .eq("peca_id", pecaId)
+          .order("criado_em", { ascending: false })
+          .order("id"),
+      );
+      const ids = Array.from(
+        new Set(linhas.map((c) => c.cobrado_por).filter((v): v is string => !!v)),
+      );
+      if (ids.length === 0) return linhas;
+      const { data: perfis } = await supabase
+        .from("profiles")
+        .select("id, nome, email")
+        .in("id", ids);
+      const mapa = new Map((perfis ?? []).map((p) => [p.id, p.nome ?? p.email ?? "Equipe"]));
+      return linhas.map((c) => ({
+        ...c,
+        nome_cobrador: c.cobrado_por ? (mapa.get(c.cobrado_por) ?? null) : null,
+      }));
+    },
+  });
+
+  /** Cobranças de um aprovador, da mais recente para a mais antiga. */
+  function cobrancasDe(contatoId: string): Cobranca[] {
+    return cobrancas.filter((c) => c.cliente_contato_id === contatoId);
+  }
+
   /** Rodada atual = handoff do acesso mais recente; cai para os acessos recentes se for antigo. */
   const handoffRodada = acessosRecentes[0]?.handoff_id ?? null;
   const rodada = handoffRodada
@@ -329,7 +386,11 @@ function TelaPeca() {
   function compartilharWhatsApp(token: string) {
     const link = linkAprovacao(token);
     const texto = `Olá! Você recebeu a peça "${peca?.nome ?? ""}" para aprovação. Acesse o link: ${link}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank", "noopener,noreferrer");
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(texto)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
   }
 
   function formatarValidade(iso: string): string {
@@ -395,10 +456,48 @@ function TelaPeca() {
       });
       if (error) throw error;
     },
-    onSuccess: () => toast.success("Lembrete enviado"),
+    onSuccess: () => {
+      toast.success("Lembrete enviado");
+      void qc.invalidateQueries({ queryKey: ["cobrancas", pecaId] });
+    },
     onError: (e: Error) => toast.error(e.message || "Não foi possível enviar o lembrete."),
   });
 
+  const marcarFeito = useMutation({
+    mutationFn: async (entrada: { id: string; feito: boolean }) => {
+      const { error } = await supabase.rpc("criacao_marcar_feito", {
+        p_comentario_id: entrada.id,
+        p_feito: entrada.feito,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => invalidar(),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const revisarCaso = useMutation({
+    mutationFn: async (entrada: { id: string; ok: boolean }) => {
+      const { error } = await supabase.rpc("atendimento_revisar_caso", {
+        p_comentario_id: entrada.id,
+        p_ok: entrada.ok,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => invalidar(),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const devolverCriacao = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("devolver_para_criacao", { p_peca_id: pecaId });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Peça devolvida para a Criação.");
+      invalidar();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const recolher = useMutation({
     mutationFn: async () => {
@@ -466,10 +565,14 @@ function TelaPeca() {
         : status === "retorno_atendimento"
           ? "Enviar para Correção (Criação)"
           : null;
+  /** Com correções ainda abertas, o atendimento devolve para a criação em vez de enviar. */
+  const devolveParaCriacao =
+    status === "aguardando_atendimento" && souAtendimento && casosAbertos.length > 0;
+  const travadoPelaCriacao = status === "criacao_ajustando" && casosAbertos.length > 0;
   const podeEnviar =
     (status === "criacao_ajustando" && souCriacao && peca.versao_atual > 0) ||
     ((status === "aguardando_atendimento" || status === "retorno_atendimento") && souAtendimento);
-  const envioParaCliente = status === "aguardando_atendimento";
+  const envioParaCliente = status === "aguardando_atendimento" && !devolveParaCriacao;
 
   return (
     <div className="mx-auto max-w-[1500px] space-y-5">
@@ -529,6 +632,35 @@ function TelaPeca() {
             </Button>
           )}
 
+          {devolveParaCriacao && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95">
+                  <Undo2 className="mr-1 size-4" /> Voltar para a Criação
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="rounded-3xl">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Devolver para a Criação?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {casosAbertos.length} correç
+                    {casosAbertos.length === 1 ? "ão continua" : "ões continuam"} em aberto. A peça
+                    volta para a Criação ajustar.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel className="rounded-2xl">Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="rounded-2xl"
+                    onClick={() => devolverCriacao.mutate()}
+                  >
+                    Devolver
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+
           {rotuloEnvio && podeEnviar && envioParaCliente && (
             <Button
               className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
@@ -541,32 +673,42 @@ function TelaPeca() {
             </Button>
           )}
 
-          {rotuloEnvio && podeEnviar && !envioParaCliente && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95">
-                  <Send className="mr-1 size-4" /> {rotuloEnvio}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="rounded-3xl">
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Confirmar envio?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Depois que a outra parte visualizar, seus comentários desta rodada ficam
-                    bloqueados para edição.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel className="rounded-2xl">Cancelar</AlertDialogCancel>
-                  <AlertDialogAction
-                    className="rounded-2xl"
-                    onClick={() => enviar.mutate(undefined)}
+          {rotuloEnvio && podeEnviar && !envioParaCliente && !devolveParaCriacao && (
+            <div className="flex flex-col items-end gap-1">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    disabled={travadoPelaCriacao}
+                    className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
                   >
-                    Enviar
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                    <Send className="mr-1 size-4" /> {rotuloEnvio}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="rounded-3xl">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Confirmar envio?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Depois que a outra parte visualizar, seus comentários desta rodada ficam
+                      bloqueados para edição.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="rounded-2xl">Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="rounded-2xl"
+                      onClick={() => enviar.mutate(undefined)}
+                    >
+                      Enviar
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              {travadoPelaCriacao && (
+                <p className="text-xs font-medium text-warning-foreground">
+                  Marque todas as correções como feitas para enviar
+                </p>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -660,6 +802,8 @@ function TelaPeca() {
                   : a.decisao === "devolvido"
                     ? `devolveu em ${formatarData(a.decidido_em)}`
                     : "pendente";
+              const lembretes = cobrancasDe(a.cliente_contato_id);
+              const ultimoLembrete = lembretes[0];
               return (
                 <li
                   key={a.id}
@@ -667,7 +811,16 @@ function TelaPeca() {
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{contato?.nome ?? "Aprovador"}</p>
-                    <p className="truncate text-xs text-muted-foreground">{contato?.email ?? "—"}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {contato?.email ?? "—"}
+                    </p>
+                    {ultimoLembrete && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Cobrado por {ultimoLembrete.nome_cobrador ?? "Equipe"} em{" "}
+                        {formatarData(ultimoLembrete.criado_em)}
+                        {lembretes.length > 1 ? ` · ${lembretes.length} lembretes` : ""}
+                      </p>
+                    )}
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <span
@@ -701,7 +854,6 @@ function TelaPeca() {
           </ul>
         </section>
       )}
-
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_400px]">
         <section className="rounded-3xl border bg-card p-4 shadow-soft">
@@ -790,63 +942,129 @@ function TelaPeca() {
                   Nenhum comentário nesta versão.
                 </p>
               )}
-              {comentariosVersao.map((c, i) => (
-                <article key={c.id} className="rounded-2xl border bg-background p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold">
-                      {c.pin_x != null && (
-                        <span className="mr-1 rounded-full bg-primary px-1.5 text-xs text-primary-foreground">
-                          {pins.findIndex((p) => p.id === c.id) + 1}
+              {comentariosVersao.map((c, i) => {
+                const selo = c.eh_caso
+                  ? (SELO_CASO[(c.status_caso as StatusCaso) ?? "aberta"] ?? SELO_CASO.aberta)
+                  : null;
+                return (
+                  <article
+                    key={c.id}
+                    className={cn(
+                      "rounded-2xl border bg-background p-3",
+                      c.eh_caso && "border-2 border-primary/40",
+                    )}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-semibold">
+                        {c.pin_x != null && (
+                          <span className="mr-1 rounded-full bg-primary px-1.5 text-xs text-primary-foreground">
+                            {pins.findIndex((p) => p.id === c.id) + 1}
+                          </span>
+                        )}
+                        {PAPEL_LABEL[c.autor_papel]}
+                        {selo && (
+                          <span
+                            className={cn(
+                              "ml-2 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                              selo.classe,
+                            )}
+                          >
+                            {selo.rotulo}
+                          </span>
+                        )}
+                      </p>
+                      <span className="text-xs text-muted-foreground">
+                        {formatarData(c.created_at)}
+                      </span>
+                    </div>
+                    <p className="mt-1 whitespace-pre-wrap text-sm">{c.texto}</p>
+                    {c.texto_original && c.texto_original !== c.texto && (
+                      <p className="mt-1 text-xs text-muted-foreground line-through">
+                        antes: {c.texto_original}
+                      </p>
+                    )}
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
+                      {c.editavel ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-success/20 px-2 py-0.5 font-medium text-success-foreground">
+                          <Eye className="size-3" /> Ainda não visto — pode editar
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 font-medium text-muted-foreground">
+                          <Lock className="size-3" /> Visto em {formatarData(c.locked_em)} —
+                          bloqueado
                         </span>
                       )}
-                      {PAPEL_LABEL[c.autor_papel]}
-                    </p>
-                    <span className="text-xs text-muted-foreground">
-                      {formatarData(c.created_at)}
-                    </span>
-                  </div>
-                  <p className="mt-1 whitespace-pre-wrap text-sm">{c.texto}</p>
-                  {c.texto_original && c.texto_original !== c.texto && (
-                    <p className="mt-1 text-xs text-muted-foreground line-through">
-                      antes: {c.texto_original}
-                    </p>
-                  )}
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
-                    {c.editavel ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-success/20 px-2 py-0.5 font-medium text-success-foreground">
-                        <Eye className="size-3" /> Ainda não visto — pode editar
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 font-medium text-muted-foreground">
-                        <Lock className="size-3" /> Visto em {formatarData(c.locked_em)} — bloqueado
-                      </span>
+                      {c.edicao_autorizada && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-warning/25 px-2 py-0.5 font-medium text-warning-foreground">
+                          <ShieldCheck className="size-3" /> Edição autorizada pelo atendimento
+                        </span>
+                      )}
+                      {c.autor_papel === "atendimento" && c.visivel_para_cliente && (
+                        <span className="rounded-full bg-cyan/25 px-2 py-0.5 font-medium text-cyan-foreground">
+                          visível para o cliente
+                        </span>
+                      )}
+                      {lerAnotacao(c.anotacao_json).length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setMarcacaoVisivel((atual) => (atual === c.id ? null : c.id))
+                          }
+                          className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 font-medium text-primary hover:bg-primary/25"
+                        >
+                          <Pencil className="size-3" />{" "}
+                          {marcacaoVisivel === c.id ? "ocultar marcação" : "ver marcação"}
+                        </button>
+                      )}
+                    </div>
+
+                    {c.eh_caso && souCriacao && status === "criacao_ajustando" && (
+                      <label className="mt-3 flex cursor-pointer items-center gap-2 rounded-xl bg-muted/50 p-2">
+                        <Checkbox
+                          checked={c.status_caso !== "aberta"}
+                          disabled={marcarFeito.isPending}
+                          onCheckedChange={(v) =>
+                            marcarFeito.mutate({ id: c.id, feito: v === true })
+                          }
+                        />
+                        <span className="text-xs font-medium">
+                          Já corrigi
+                          {c.feito_em ? ` · marcado em ${formatarData(c.feito_em)}` : ""}
+                        </span>
+                      </label>
                     )}
-                    {c.edicao_autorizada && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-warning/25 px-2 py-0.5 font-medium text-warning-foreground">
-                        <ShieldCheck className="size-3" /> Edição autorizada pelo atendimento
-                      </span>
+
+                    {c.eh_caso && souAtendimento && status === "aguardando_atendimento" && (
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <Button
+                          size="sm"
+                          className="rounded-xl bg-success text-success-foreground hover:opacity-90"
+                          disabled={revisarCaso.isPending || c.status_caso === "revisada"}
+                          onClick={() => revisarCaso.mutate({ id: c.id, ok: true })}
+                        >
+                          <CheckCircle2 className="mr-1 size-4" /> Revisado ✓
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="rounded-xl"
+                          disabled={revisarCaso.isPending || c.status_caso === "aberta"}
+                          onClick={() => revisarCaso.mutate({ id: c.id, ok: false })}
+                        >
+                          <Undo2 className="mr-1 size-4" /> Não feito
+                        </Button>
+                        {c.revisado_em && (
+                          <span className="text-[11px] text-muted-foreground">
+                            revisado em {formatarData(c.revisado_em)}
+                          </span>
+                        )}
+                      </div>
                     )}
-                    {c.autor_papel === "atendimento" && c.visivel_para_cliente && (
-                      <span className="rounded-full bg-cyan/25 px-2 py-0.5 font-medium text-cyan-foreground">
-                        visível para o cliente
-                      </span>
-                    )}
-                    {lerAnotacao(c.anotacao_json).length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setMarcacaoVisivel((atual) => (atual === c.id ? null : c.id))
-                        }
-                        className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 font-medium text-primary hover:bg-primary/25"
-                      >
-                        <Pencil className="size-3" />{" "}
-                        {marcacaoVisivel === c.id ? "ocultar marcação" : "ver marcação"}
-                      </button>
-                    )}
-                  </div>
-                  <span className="sr-only">{i}</span>
-                </article>
-              ))}
+
+                    <span className="sr-only">{i}</span>
+                  </article>
+                );
+              })}
 
               {podeComentar && (
                 <div className="space-y-2 rounded-2xl border bg-background p-3">

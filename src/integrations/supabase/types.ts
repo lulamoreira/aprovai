@@ -217,6 +217,45 @@ export type Database = {
         }
         Relationships: []
       }
+      cobrancas: {
+        Row: {
+          cliente_contato_id: string | null
+          cobrado_por: string | null
+          criado_em: string
+          id: string
+          peca_id: string | null
+        }
+        Insert: {
+          cliente_contato_id?: string | null
+          cobrado_por?: string | null
+          criado_em?: string
+          id?: string
+          peca_id?: string | null
+        }
+        Update: {
+          cliente_contato_id?: string | null
+          cobrado_por?: string | null
+          criado_em?: string
+          id?: string
+          peca_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cobrancas_cliente_contato_id_fkey"
+            columns: ["cliente_contato_id"]
+            isOneToOne: false
+            referencedRelation: "cliente_contatos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cobrancas_peca_id_fkey"
+            columns: ["peca_id"]
+            isOneToOne: false
+            referencedRelation: "pecas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comentario_historico: {
         Row: {
           autorizacao_id: string | null
@@ -272,6 +311,8 @@ export type Database = {
           edicao_autorizada: boolean
           editavel: boolean
           eh_caso: boolean
+          feito_em: string | null
+          feito_por: string | null
           handoff_id: string | null
           id: string
           locked_em: string | null
@@ -279,6 +320,8 @@ export type Database = {
           pin_x: number | null
           pin_y: number | null
           resolvido_em: string | null
+          revisado_em: string | null
+          revisado_por: string | null
           status_caso: string | null
           texto: string
           texto_original: string | null
@@ -295,6 +338,8 @@ export type Database = {
           edicao_autorizada?: boolean
           editavel?: boolean
           eh_caso?: boolean
+          feito_em?: string | null
+          feito_por?: string | null
           handoff_id?: string | null
           id?: string
           locked_em?: string | null
@@ -302,6 +347,8 @@ export type Database = {
           pin_x?: number | null
           pin_y?: number | null
           resolvido_em?: string | null
+          revisado_em?: string | null
+          revisado_por?: string | null
           status_caso?: string | null
           texto: string
           texto_original?: string | null
@@ -318,6 +365,8 @@ export type Database = {
           edicao_autorizada?: boolean
           editavel?: boolean
           eh_caso?: boolean
+          feito_em?: string | null
+          feito_por?: string | null
           handoff_id?: string | null
           id?: string
           locked_em?: string | null
@@ -325,6 +374,8 @@ export type Database = {
           pin_x?: number | null
           pin_y?: number | null
           resolvido_em?: string | null
+          revisado_em?: string | null
+          revisado_por?: string | null
           status_caso?: string | null
           texto?: string
           texto_original?: string | null
@@ -679,6 +730,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      atendimento_revisar_caso: {
+        Args: { p_comentario_id: string; p_ok: boolean }
+        Returns: undefined
+      }
       autorizar_edicao_cliente: {
         Args: { p_handoff_id: string; p_motivo: string }
         Returns: string
@@ -721,6 +776,11 @@ export type Database = {
         }
         Returns: string
       }
+      criacao_marcar_feito: {
+        Args: { p_comentario_id: string; p_feito: boolean }
+        Returns: undefined
+      }
+      devolver_para_criacao: { Args: { p_peca_id: string }; Returns: undefined }
       editar_peca_meta: {
         Args: { p_nome: string; p_peca_id: string; p_tamanho: string }
         Returns: undefined

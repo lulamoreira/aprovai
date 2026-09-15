@@ -682,15 +682,26 @@ function TelaPeca() {
           )}
 
           {rotuloEnvio && podeEnviar && envioParaCliente && (
-            <Button
-              className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
-              onClick={() => {
-                setContatosSelecionados(aprovadores.map((a) => a.id));
-                setModalContatos(true);
-              }}
-            >
-              <Send className="mr-1 size-4" /> {rotuloEnvio}
-            </Button>
+            <div className="flex flex-col items-end gap-1">
+              <Button
+                disabled={faltaRevisar}
+                title={
+                  faltaRevisar ? "Revise todas as marcações antes de enviar ao cliente." : undefined
+                }
+                className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
+                onClick={() => {
+                  setContatosSelecionados(aprovadores.map((a) => a.id));
+                  setModalContatos(true);
+                }}
+              >
+                <Send className="mr-1 size-4" /> {rotuloEnvio}
+              </Button>
+              {faltaRevisar && (
+                <p className="max-w-64 text-right text-xs font-medium text-warning-foreground">
+                  Revise todas as marcações (marque “Revisado ✓”) antes de enviar ao cliente.
+                </p>
+              )}
+            </div>
           )}
 
           {rotuloEnvio && podeEnviar && !envioParaCliente && !devolveParaCriacao && (

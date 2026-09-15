@@ -70,6 +70,7 @@ interface RespostaCliente {
     id: string;
     versao_id: string | null;
     autor_papel: "criacao" | "atendimento" | "cliente";
+    autor_cliente_contato_id: string | null;
     texto: string;
     pin_x: number | null;
     pin_y: number | null;

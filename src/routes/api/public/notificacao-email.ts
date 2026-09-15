@@ -119,7 +119,10 @@ async function processar(notificacaoId: string): Promise<void> {
   const appUrl = (process.env["APP_URL"] ?? PADRAO_APP_URL).replace(/\/+$/, "");
   let link: string | null = null;
 
+  let pin: string | null = null;
+
   const tiposComAcesso = ["pronta_aprovacao", "edicao_autorizada", "lembrete_aprovacao"];
+  const tiposComPin = ["pronta_aprovacao", "lembrete_aprovacao"];
   if (
     tiposComAcesso.includes(notificacao.tipo) &&
     notificacao.peca_id &&
@@ -127,13 +130,28 @@ async function processar(notificacaoId: string): Promise<void> {
   ) {
     const { data: acesso } = await supabaseAdmin
       .from("acessos_cliente")
-      .select("token, criado_em")
+      .select("id, token, criado_em")
       .eq("peca_id", notificacao.peca_id)
       .eq("cliente_contato_id", notificacao.destinatario_cliente_contato_id)
       .order("criado_em", { ascending: false })
       .limit(1)
       .maybeSingle();
     if (acesso?.token) link = `${appUrl}/aprovar/${acesso.token}`;
+
+    // Gera um código de 6 dígitos e guarda apenas o hash; o código vai só no e-mail.
+    if (acesso?.id && tiposComPin.includes(notificacao.tipo)) {
+      const aleatorio = crypto.getRandomValues(new Uint32Array(1))[0] ?? 0;
+      const codigo = String(aleatorio % 1_000_000).padStart(6, "0");
+      const { error: erroPin } = await supabaseAdmin.rpc("registrar_pin_acesso", {
+        p_acesso_id: acesso.id,
+        p_pin: codigo,
+      });
+      if (erroPin) {
+        console.error("[enviar-email] falha ao registrar o código", erroPin.message);
+      } else {
+        pin = codigo;
+      }
+    }
   }
 
   const lovableApiKey = process.env["LOVABLE_API_KEY"];

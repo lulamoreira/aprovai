@@ -488,9 +488,9 @@ function TelaCliente() {
                         {formatarData(c.created_at)}
                       </span>
                     </div>
-                    <p className="mt-1 whitespace-pre-wrap text-sm font-medium text-foreground">
+                    <div className="mt-2 rounded-xl border border-border bg-card p-3 text-sm font-medium text-card-foreground shadow-soft">
                       {c.texto}
-                    </p>
+                    </div>
 
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                       <Button

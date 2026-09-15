@@ -271,12 +271,15 @@ export type Database = {
           created_at: string
           edicao_autorizada: boolean
           editavel: boolean
+          eh_caso: boolean
           handoff_id: string | null
           id: string
           locked_em: string | null
           peca_id: string
           pin_x: number | null
           pin_y: number | null
+          resolvido_em: string | null
+          status_caso: string | null
           texto: string
           texto_original: string | null
           updated_at: string
@@ -291,12 +294,15 @@ export type Database = {
           created_at?: string
           edicao_autorizada?: boolean
           editavel?: boolean
+          eh_caso?: boolean
           handoff_id?: string | null
           id?: string
           locked_em?: string | null
           peca_id: string
           pin_x?: number | null
           pin_y?: number | null
+          resolvido_em?: string | null
+          status_caso?: string | null
           texto: string
           texto_original?: string | null
           updated_at?: string
@@ -311,12 +317,15 @@ export type Database = {
           created_at?: string
           edicao_autorizada?: boolean
           editavel?: boolean
+          eh_caso?: boolean
           handoff_id?: string | null
           id?: string
           locked_em?: string | null
           peca_id?: string
           pin_x?: number | null
           pin_y?: number | null
+          resolvido_em?: string | null
+          status_caso?: string | null
           texto?: string
           texto_original?: string | null
           updated_at?: string
@@ -676,15 +685,21 @@ export type Database = {
       }
       cliente_abrir: { Args: { p_token: string }; Returns: Json }
       cliente_aprovar: { Args: { p_token: string }; Returns: undefined }
+      cliente_aprovar_tudo: { Args: { p_token: string }; Returns: undefined }
       cliente_comentar: {
         Args: {
           p_anotacao_json?: Json
+          p_eh_caso?: boolean
           p_pin_x?: number
           p_pin_y?: number
           p_texto: string
           p_token: string
         }
         Returns: string
+      }
+      cliente_decidir_caso: {
+        Args: { p_comentario_id: string; p_decisao: string; p_token: string }
+        Returns: undefined
       }
       cliente_devolver: { Args: { p_token: string }; Returns: undefined }
       cliente_editar_comentario: {
@@ -717,6 +732,10 @@ export type Database = {
           p_modo_aprovacao?: string
           p_peca_id: string
         }
+        Returns: undefined
+      }
+      finalizar_aprovacao_cliente: {
+        Args: { p_acesso_id: string }
         Returns: undefined
       }
       has_role: {

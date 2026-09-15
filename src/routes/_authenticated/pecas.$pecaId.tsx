@@ -1312,13 +1312,25 @@ function TelaPeca() {
             >
               Cancelar
             </Button>
-            <Button
-              disabled={contatosSelecionados.length === 0 || enviar.isPending}
-              onClick={() => enviar.mutate({ contatoIds: contatosSelecionados, modo: modoEnvio })}
-              className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
-            >
-              <Send className="mr-1 size-4" /> Enviar para o cliente
-            </Button>
+            <div className="flex flex-col items-end gap-1">
+              <Button
+                disabled={contatosSelecionados.length === 0 || enviar.isPending}
+                title={
+                  contatosSelecionados.length === 0
+                    ? "Selecione ao menos um aprovador."
+                    : undefined
+                }
+                onClick={() => enviar.mutate({ contatoIds: contatosSelecionados, modo: modoEnvio })}
+                className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
+              >
+                <Send className="mr-1 size-4" /> Enviar para o cliente
+              </Button>
+              {contatosSelecionados.length === 0 && (
+                <p className="text-xs font-medium text-warning-foreground">
+                  Marque ao menos um aprovador para enviar.
+                </p>
+              )}
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

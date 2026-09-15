@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Eye, Loader2, MessageSquarePlus, Undo2 } from "lucide-react";
+import {
+  CheckCircle2,
+  Eye,
+  Loader2,
+  MessageSquarePlus,
+  Pencil,
+  Trash2,
+  Undo2,
+} from "lucide-react";
 import { LogoAprovAI } from "@/components/LogoAprovAI";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -89,9 +97,9 @@ interface RespostaCliente {
 }
 
 const SELO_CASO: Record<StatusCaso, { rotulo: string; classe: string }> = {
-  aberta: { rotulo: "Aberta", classe: "bg-warning/25 text-warning-foreground" },
-  feita: { rotulo: "Ajuste feito", classe: "bg-info/25 text-info-foreground" },
-  revisada: { rotulo: "Revisada", classe: "bg-cyan/25 text-cyan-foreground" },
+  aberta: { rotulo: "Pedido", classe: "bg-warning/25 text-warning-foreground" },
+  feita: { rotulo: "Em revisão na agência", classe: "bg-info/25 text-info-foreground" },
+  revisada: { rotulo: "Corrigida — confira", classe: "bg-cyan/25 text-cyan-foreground" },
   aprovada: { rotulo: "Aprovada", classe: "bg-success/25 text-success-foreground" },
 };
 
@@ -105,6 +113,8 @@ function TelaCliente() {
   const [emFoco, setEmFoco] = useState<string | null>(null);
   const [corrigindo, setCorrigindo] = useState<string | null>(null);
   const [textoCorrecao, setTextoCorrecao] = useState("");
+  const [editando, setEditando] = useState<string | null>(null);
+  const [textoEdicao, setTextoEdicao] = useState("");
   const anotador = useAnotador();
 
   const { data, isLoading, error } = useQuery({
@@ -166,7 +176,7 @@ function TelaCliente() {
   });
 
   const decidirCaso = useMutation({
-    mutationFn: async (entrada: { id: string; decisao: "aprovar" | "reabrir" }) => {
+    mutationFn: async (entrada: { id: string; decisao: "aprovar" }) => {
       const { error: erro } = await supabase.rpc("cliente_decidir_caso", {
         p_token: token,
         p_comentario_id: entrada.id,
@@ -174,8 +184,69 @@ function TelaCliente() {
       });
       if (erro) throw erro;
     },
-    onSuccess: (_d, entrada) => {
-      toast.success(entrada.decisao === "aprovar" ? "Marcação aprovada." : "Marcação reaberta.");
+    onSuccess: () => {
+      toast.success("Marcação aprovada.");
+      invalidar();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  /** Reabre uma marcação corrigida e registra o que ainda falta. */
+  const pedirCorrecao = useMutation({
+    mutationFn: async (entrada: { id: string; numero: number; texto: string }) => {
+      const { error: erro } = await supabase.rpc("cliente_decidir_caso", {
+        p_token: token,
+        p_comentario_id: entrada.id,
+        p_decisao: "pedir_correcao",
+      });
+      if (erro) throw erro;
+      const complemento = entrada.texto.trim();
+      if (complemento) {
+        const { error: erro2 } = await supabase.rpc("cliente_comentar", {
+          p_token: token,
+          p_texto: `Sobre a marcação ${entrada.numero}: ${complemento}`,
+          p_eh_caso: false,
+        });
+        if (erro2) throw erro2;
+      }
+    },
+    onSuccess: () => {
+      setCorrigindo(null);
+      setTextoCorrecao("");
+      toast.success("Pedido de correção registrado.");
+      invalidar();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const editarCaso = useMutation({
+    mutationFn: async (entrada: { id: string; texto: string }) => {
+      const { error: erro } = await supabase.rpc("cliente_editar_comentario", {
+        p_token: token,
+        p_comentario_id: entrada.id,
+        p_texto: entrada.texto.trim(),
+      });
+      if (erro) throw erro;
+    },
+    onSuccess: () => {
+      setEditando(null);
+      setTextoEdicao("");
+      toast.success("Marcação atualizada.");
+      invalidar();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const removerCaso = useMutation({
+    mutationFn: async (id: string) => {
+      const { error: erro } = await supabase.rpc("cliente_remover_caso", {
+        p_token: token,
+        p_comentario_id: id,
+      });
+      if (erro) throw erro;
+    },
+    onSuccess: () => {
+      toast.success("Marcação removida.");
       invalidar();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -236,6 +307,10 @@ function TelaCliente() {
   const casos = data.comentarios.filter((c) => c.eh_caso && daVersao(c));
   const gerais = data.comentarios.filter((c) => !c.eh_caso);
   const abertos = casos.filter((c) => c.status_caso === "aberta");
+  /** Marcações que voltaram corrigidas e ainda esperam a decisão do cliente. */
+  const aDecidir = casos.filter((c) => c.status_caso !== "aberta" && c.status_caso !== "aprovada");
+  const aprovadas = casos.filter((c) => c.status_caso === "aprovada");
+  const podeAprovarTudo = abertos.length === 0 && aDecidir.length === 0;
 
   const caso = casos.find((c) => c.id === emFoco) ?? null;
   const strokesEmFoco = caso ? lerAnotacao(caso.anotacao_json) : [];
@@ -332,7 +407,7 @@ function TelaCliente() {
             </h2>
             {casos.length > 0 && (
               <span className="text-xs font-medium text-muted-foreground">
-                {casos.length - abertos.length} de {casos.length} aprovadas
+                {aprovadas.length} de {casos.length} aprovadas
               </span>
             )}
           </div>
@@ -409,22 +484,8 @@ function TelaCliente() {
                         {emFoco === c.id ? "Ocultar na arte" : "Ver na arte"}
                       </Button>
 
-                      {aberta && (
+                      {aberta && c.status_caso === "aberta" && meu && c.editavel && (
                         <>
-                          {c.status_caso !== "aprovada" && (
-                            <Button
-                              type="button"
-                              size="sm"
-                              className="rounded-xl bg-success text-success-foreground hover:opacity-90"
-                              disabled={decidirCaso.isPending}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                decidirCaso.mutate({ id: c.id, decisao: "aprovar" });
-                              }}
-                            >
-                              <CheckCircle2 className="mr-1 size-4" /> Aprovar
-                            </Button>
-                          )}
                           <Button
                             type="button"
                             size="sm"
@@ -432,10 +493,76 @@ function TelaCliente() {
                             className="rounded-xl"
                             onClick={(e) => {
                               e.stopPropagation();
+                              setCorrigindo(null);
+                              setEditando((atual) => (atual === c.id ? null : c.id));
+                              setTextoEdicao(c.texto);
+                            }}
+                          >
+                            <Pencil className="mr-1 size-4" /> Editar
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className="rounded-xl text-destructive"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Trash2 className="mr-1 size-4" /> Remover
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent
+                              className="rounded-3xl"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Remover esta marcação?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  O pedido “{c.texto}” será apagado. Esta ação não pode ser
+                                  desfeita.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel className="rounded-2xl">
+                                  Cancelar
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="rounded-2xl"
+                                  onClick={() => removerCaso.mutate(c.id)}
+                                >
+                                  Remover
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </>
+                      )}
+
+                      {aberta && c.status_caso === "revisada" && (
+                        <>
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="rounded-xl bg-success text-success-foreground hover:opacity-90"
+                            disabled={decidirCaso.isPending}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              decidirCaso.mutate({ id: c.id, decisao: "aprovar" });
+                            }}
+                          >
+                            <CheckCircle2 className="mr-1 size-4" /> Aprovar
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="rounded-xl"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditando(null);
                               setCorrigindo((atual) => (atual === c.id ? null : c.id));
                               setTextoCorrecao("");
-                              if (c.status_caso === "aprovada")
-                                decidirCaso.mutate({ id: c.id, decisao: "reabrir" });
                             }}
                           >
                             <MessageSquarePlus className="mr-1 size-4" /> Pedir correção
@@ -443,6 +570,39 @@ function TelaCliente() {
                         </>
                       )}
                     </div>
+
+                    {aberta && editando === c.id && (
+                      <div
+                        className="mt-3 space-y-2 rounded-2xl bg-muted/50 p-3"
+                        onClick={(e) => e.stopPropagation()}
+                        role="presentation"
+                      >
+                        <Textarea
+                          value={textoEdicao}
+                          onChange={(e) => setTextoEdicao(e.target.value)}
+                          placeholder="Reescreva o que precisa mudar..."
+                          className="min-h-20 rounded-xl"
+                        />
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="rounded-xl"
+                            onClick={() => setEditando(null)}
+                          >
+                            Cancelar
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="gradient-brand rounded-xl text-primary-foreground"
+                            disabled={!textoEdicao.trim() || editarCaso.isPending}
+                            onClick={() => editarCaso.mutate({ id: c.id, texto: textoEdicao })}
+                          >
+                            Salvar
+                          </Button>
+                        </div>
+                      </div>
+                    )}
 
                     {aberta && corrigindo === c.id && (
                       <div
@@ -468,12 +628,12 @@ function TelaCliente() {
                           <Button
                             size="sm"
                             className="gradient-brand rounded-xl text-primary-foreground"
-                            disabled={!textoCorrecao.trim() || comentar.isPending}
+                            disabled={!textoCorrecao.trim() || pedirCorrecao.isPending}
                             onClick={() =>
-                              comentar.mutate({
-                                texto: `Sobre a marcação ${i + 1}: ${textoCorrecao.trim()}`,
-                                ehCaso: false,
-                                comDesenho: false,
+                              pedirCorrecao.mutate({
+                                id: c.id,
+                                numero: i + 1,
+                                texto: textoCorrecao,
                               })
                             }
                           >
@@ -590,11 +750,19 @@ function TelaCliente() {
       {aberta && (
         <div className="fixed inset-x-0 bottom-0 border-t bg-card/95 p-4 backdrop-blur">
           <div className="mx-auto max-w-3xl space-y-2">
-            {abertos.length > 0 && (
+            {abertos.length > 0 ? (
               <p className="text-center text-xs font-medium text-warning-foreground">
-                Faltam decidir {abertos.length} marcaç{abertos.length === 1 ? "ão" : "ões"} (
-                {abertos.map((c) => `#${casos.indexOf(c) + 1}`).join(", ")}).
+                Você tem {abertos.length} pedido{abertos.length === 1 ? "" : "s"} de correção (
+                {abertos.map((c) => `#${casos.indexOf(c) + 1}`).join(", ")}). Devolva para a agência
+                corrigir.
               </p>
+            ) : (
+              aDecidir.length > 0 && (
+                <p className="text-center text-xs font-medium text-warning-foreground">
+                  Decida cada marcação que voltou corrigida (
+                  {aDecidir.map((c) => `#${casos.indexOf(c) + 1}`).join(", ")}) antes de finalizar.
+                </p>
+              )
             )}
             <div className="flex gap-3">
               {abertos.length > 0 && (
@@ -622,32 +790,44 @@ function TelaCliente() {
                 </AlertDialog>
               )}
 
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button className="gradient-brand flex-1 rounded-2xl text-primary-foreground hover:opacity-95">
-                    <CheckCircle2 className="mr-1 size-4" /> Aprovar tudo
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent className="rounded-3xl">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Aprovar esta peça?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {abertos.length > 0
-                        ? `Todas as ${abertos.length} marcações abertas serão dadas como aprovadas e a peça segue para produção. A aprovação é definitiva.`
-                        : "A aprovação é definitiva e libera a peça para produção."}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel className="rounded-2xl">Cancelar</AlertDialogCancel>
-                    <AlertDialogAction
-                      className="rounded-2xl"
-                      onClick={() => aprovarTudo.mutate()}
-                    >
-                      Aprovar
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              {podeAprovarTudo ? (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button className="gradient-brand flex-1 rounded-2xl text-primary-foreground hover:opacity-95">
+                      <CheckCircle2 className="mr-1 size-4" /> Aprovar tudo
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="rounded-3xl">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Aprovar esta peça?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        A aprovação é definitiva e libera a peça para produção.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="rounded-2xl">Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="rounded-2xl"
+                        onClick={() => aprovarTudo.mutate()}
+                      >
+                        Aprovar
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              ) : (
+                <Button
+                  disabled
+                  className="flex-1 rounded-2xl"
+                  title={
+                    abertos.length > 0
+                      ? "Devolva seus pedidos para a agência corrigir."
+                      : "Decida cada marcação que voltou corrigida."
+                  }
+                >
+                  <CheckCircle2 className="mr-1 size-4" /> Aprovar tudo
+                </Button>
+              )}
             </div>
           </div>
         </div>

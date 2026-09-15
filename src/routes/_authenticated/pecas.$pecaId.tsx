@@ -265,6 +265,8 @@ function TelaPeca() {
   /** Marcações do cliente nesta versão, cada uma com decisão própria. */
   const casos = comentariosVersao.filter((c) => c.eh_caso);
   const casosAbertos = casos.filter((c) => c.status_caso === "aberta");
+  /** Marcações que ainda não receberam o "Revisado ✓" do atendimento. */
+  const casosNaoRevisados = casos.filter((c) => c.status_caso !== "revisada");
   const ultimoHandoff = (data?.handoffs ?? []).find((h) => !h.recolhido_em) ?? null;
   const podeRecolher =
     !!ultimoHandoff &&

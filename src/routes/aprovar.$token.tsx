@@ -488,7 +488,9 @@ function TelaCliente() {
                         {formatarData(c.created_at)}
                       </span>
                     </div>
-                    <p className="mt-1 whitespace-pre-wrap text-sm">{c.texto}</p>
+                    <p className="mt-1 whitespace-pre-wrap text-sm font-medium text-foreground">
+                      {c.texto}
+                    </p>
 
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                       <Button
@@ -715,7 +717,7 @@ function TelaCliente() {
             Comentário geral
           </h2>
           {gerais.map((c) => (
-            <article key={c.id} className="rounded-2xl border bg-card p-3">
+            <article key={c.id} className="rounded-2xl border bg-muted/40 p-3">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold">
                   {c.autor_cliente_contato_id === data.contato.id

@@ -452,9 +452,49 @@ function TelaPeca() {
       });
       if (error) throw error;
     },
-    onSuccess: () => toast.success("Lembrete enviado"),
+    onSuccess: () => {
+      toast.success("Lembrete enviado");
+      void qc.invalidateQueries({ queryKey: ["cobrancas", pecaId] });
+    },
     onError: (e: Error) => toast.error(e.message || "Não foi possível enviar o lembrete."),
   });
+
+  const marcarFeito = useMutation({
+    mutationFn: async (entrada: { id: string; feito: boolean }) => {
+      const { error } = await supabase.rpc("criacao_marcar_feito", {
+        p_comentario_id: entrada.id,
+        p_feito: entrada.feito,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => invalidar(),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const revisarCaso = useMutation({
+    mutationFn: async (entrada: { id: string; ok: boolean }) => {
+      const { error } = await supabase.rpc("atendimento_revisar_caso", {
+        p_comentario_id: entrada.id,
+        p_ok: entrada.ok,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => invalidar(),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const devolverCriacao = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("devolver_para_criacao", { p_peca_id: pecaId });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Peça devolvida para a Criação.");
+      invalidar();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
 
 
   const recolher = useMutation({

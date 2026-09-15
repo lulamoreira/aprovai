@@ -484,22 +484,8 @@ function TelaCliente() {
                         {emFoco === c.id ? "Ocultar na arte" : "Ver na arte"}
                       </Button>
 
-                      {aberta && (
+                      {aberta && c.status_caso === "aberta" && meu && c.editavel && (
                         <>
-                          {c.status_caso !== "aprovada" && (
-                            <Button
-                              type="button"
-                              size="sm"
-                              className="rounded-xl bg-success text-success-foreground hover:opacity-90"
-                              disabled={decidirCaso.isPending}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                decidirCaso.mutate({ id: c.id, decisao: "aprovar" });
-                              }}
-                            >
-                              <CheckCircle2 className="mr-1 size-4" /> Aprovar
-                            </Button>
-                          )}
                           <Button
                             type="button"
                             size="sm"
@@ -507,10 +493,76 @@ function TelaCliente() {
                             className="rounded-xl"
                             onClick={(e) => {
                               e.stopPropagation();
+                              setCorrigindo(null);
+                              setEditando((atual) => (atual === c.id ? null : c.id));
+                              setTextoEdicao(c.texto);
+                            }}
+                          >
+                            <Pencil className="mr-1 size-4" /> Editar
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className="rounded-xl text-destructive"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Trash2 className="mr-1 size-4" /> Remover
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent
+                              className="rounded-3xl"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Remover esta marcação?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  O pedido “{c.texto}” será apagado. Esta ação não pode ser
+                                  desfeita.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel className="rounded-2xl">
+                                  Cancelar
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="rounded-2xl"
+                                  onClick={() => removerCaso.mutate(c.id)}
+                                >
+                                  Remover
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </>
+                      )}
+
+                      {aberta && c.status_caso === "revisada" && (
+                        <>
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="rounded-xl bg-success text-success-foreground hover:opacity-90"
+                            disabled={decidirCaso.isPending}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              decidirCaso.mutate({ id: c.id, decisao: "aprovar" });
+                            }}
+                          >
+                            <CheckCircle2 className="mr-1 size-4" /> Aprovar
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="rounded-xl"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditando(null);
                               setCorrigindo((atual) => (atual === c.id ? null : c.id));
                               setTextoCorrecao("");
-                              if (c.status_caso === "aprovada")
-                                decidirCaso.mutate({ id: c.id, decisao: "reabrir" });
                             }}
                           >
                             <MessageSquarePlus className="mr-1 size-4" /> Pedir correção
@@ -518,6 +570,39 @@ function TelaCliente() {
                         </>
                       )}
                     </div>
+
+                    {aberta && editando === c.id && (
+                      <div
+                        className="mt-3 space-y-2 rounded-2xl bg-muted/50 p-3"
+                        onClick={(e) => e.stopPropagation()}
+                        role="presentation"
+                      >
+                        <Textarea
+                          value={textoEdicao}
+                          onChange={(e) => setTextoEdicao(e.target.value)}
+                          placeholder="Reescreva o que precisa mudar..."
+                          className="min-h-20 rounded-xl"
+                        />
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="rounded-xl"
+                            onClick={() => setEditando(null)}
+                          >
+                            Cancelar
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="gradient-brand rounded-xl text-primary-foreground"
+                            disabled={!textoEdicao.trim() || editarCaso.isPending}
+                            onClick={() => editarCaso.mutate({ id: c.id, texto: textoEdicao })}
+                          >
+                            Salvar
+                          </Button>
+                        </div>
+                      </div>
+                    )}
 
                     {aberta && corrigindo === c.id && (
                       <div
@@ -543,12 +628,12 @@ function TelaCliente() {
                           <Button
                             size="sm"
                             className="gradient-brand rounded-xl text-primary-foreground"
-                            disabled={!textoCorrecao.trim() || comentar.isPending}
+                            disabled={!textoCorrecao.trim() || pedirCorrecao.isPending}
                             onClick={() =>
-                              comentar.mutate({
-                                texto: `Sobre a marcação ${i + 1}: ${textoCorrecao.trim()}`,
-                                ehCaso: false,
-                                comDesenho: false,
+                              pedirCorrecao.mutate({
+                                id: c.id,
+                                numero: i + 1,
+                                texto: textoCorrecao,
                               })
                             }
                           >

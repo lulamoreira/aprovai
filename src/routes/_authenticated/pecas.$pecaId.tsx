@@ -577,11 +577,22 @@ function TelaPeca() {
   /** Com correções ainda abertas, o atendimento devolve para a criação em vez de enviar. */
   const devolveParaCriacao =
     status === "aguardando_atendimento" && souAtendimento && casosAbertos.length > 0;
-  const travadoPelaCriacao = status === "criacao_ajustando" && casosAbertos.length > 0;
+  const semArte = status === "criacao_ajustando" && peca.versao_atual < 1;
+  const travadoPelaCriacao =
+    status === "criacao_ajustando" && (semArte || casosAbertos.length > 0);
+  /** Atendimento só envia ao cliente com TODAS as marcações revisadas. */
+  const faltaRevisar =
+    status === "aguardando_atendimento" &&
+    souAtendimento &&
+    casosAbertos.length === 0 &&
+    casosNaoRevisados.length > 0;
   const podeEnviar =
-    (status === "criacao_ajustando" && souCriacao && peca.versao_atual > 0) ||
+    (status === "criacao_ajustando" && souCriacao) ||
     ((status === "aguardando_atendimento" || status === "retorno_atendimento") && souAtendimento);
   const envioParaCliente = status === "aguardando_atendimento" && !devolveParaCriacao;
+  const motivoTravaCriacao = semArte
+    ? "Suba uma arte antes de enviar."
+    : "Marque todas as correções como feitas para enviar.";
 
   return (
     <div className="mx-auto max-w-[1500px] space-y-5">

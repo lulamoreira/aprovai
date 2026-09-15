@@ -1095,6 +1095,13 @@ function TelaPeca() {
                             revisado em {formatarData(c.revisado_em)}
                           </span>
                         )}
+                        <p className="w-full text-[11px] font-medium text-muted-foreground">
+                          {c.status_caso === "revisada"
+                            ? "Já está revisada — use “Não feito” se ainda faltar algo."
+                            : c.status_caso === "aberta"
+                              ? "Já está marcada como não feita — use “Revisado ✓” quando estiver ok."
+                              : "Marque “Revisado ✓” para liberar o envio ao cliente."}
+                        </p>
                       </div>
                     )}
 

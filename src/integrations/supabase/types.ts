@@ -20,10 +20,14 @@ export type Database = {
           criado_em: string
           decidido_em: string | null
           decisao: string | null
+          desbloqueado_em: string | null
           expira_em: string
           handoff_id: string | null
           id: string
           peca_id: string
+          pin_bloqueado: boolean
+          pin_hash: string | null
+          pin_tentativas: number
           token: string
           ultimo_acesso: string | null
         }
@@ -32,10 +36,14 @@ export type Database = {
           criado_em?: string
           decidido_em?: string | null
           decisao?: string | null
+          desbloqueado_em?: string | null
           expira_em?: string
           handoff_id?: string | null
           id?: string
           peca_id: string
+          pin_bloqueado?: boolean
+          pin_hash?: string | null
+          pin_tentativas?: number
           token: string
           ultimo_acesso?: string | null
         }
@@ -44,10 +52,14 @@ export type Database = {
           criado_em?: string
           decidido_em?: string | null
           decisao?: string | null
+          desbloqueado_em?: string | null
           expira_em?: string
           handoff_id?: string | null
           id?: string
           peca_id?: string
+          pin_bloqueado?: boolean
+          pin_hash?: string | null
+          pin_tentativas?: number
           token?: string
           ultimo_acesso?: string | null
         }
@@ -709,6 +721,31 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      acesso_liberado: {
+        Args: { p_token: string }
+        Returns: {
+          cliente_contato_id: string
+          criado_em: string
+          decidido_em: string | null
+          decisao: string | null
+          desbloqueado_em: string | null
+          expira_em: string
+          handoff_id: string | null
+          id: string
+          peca_id: string
+          pin_bloqueado: boolean
+          pin_hash: string | null
+          pin_tentativas: number
+          token: string
+          ultimo_acesso: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "acessos_cliente"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       acesso_por_token: {
         Args: { p_token: string }
         Returns: {
@@ -716,10 +753,14 @@ export type Database = {
           criado_em: string
           decidido_em: string | null
           decisao: string | null
+          desbloqueado_em: string | null
           expira_em: string
           handoff_id: string | null
           id: string
           peca_id: string
+          pin_bloqueado: boolean
+          pin_hash: string | null
+          pin_tentativas: number
           token: string
           ultimo_acesso: string | null
         }
@@ -761,9 +802,14 @@ export type Database = {
         Args: { p_comentario_id: string; p_texto: string; p_token: string }
         Returns: undefined
       }
+      cliente_previa: { Args: { p_token: string }; Returns: Json }
       cliente_remover_caso: {
         Args: { p_comentario_id: string; p_token: string }
         Returns: undefined
+      }
+      cliente_validar_pin: {
+        Args: { p_pin: string; p_token: string }
+        Returns: Json
       }
       cobrar_aprovador: {
         Args: { p_cliente_contato_id: string; p_peca_id: string }

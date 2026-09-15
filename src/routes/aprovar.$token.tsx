@@ -103,6 +103,13 @@ const SELO_CASO: Record<StatusCaso, { rotulo: string; classe: string }> = {
   aprovada: { rotulo: "Aprovada", classe: "bg-success/25 text-success-foreground" },
 };
 
+const CASO_FUNDO: Record<StatusCaso, string> = {
+  aberta: "bg-warning/15",
+  feita: "bg-info/15",
+  revisada: "bg-cyan/15",
+  aprovada: "bg-success/15",
+};
+
 function TelaCliente() {
   const { token } = Route.useParams();
   const qc = useQueryClient();
@@ -448,7 +455,8 @@ function TelaCliente() {
                     setEmFoco((atual) => (atual === c.id ? null : c.id));
                 }}
                 className={cn(
-                  "cursor-pointer rounded-3xl border-2 bg-card p-4 shadow-soft transition",
+                  "cursor-pointer rounded-3xl border-2 p-4 shadow-soft transition",
+                  CASO_FUNDO[c.status_caso ?? "aberta"],
                   emFoco === c.id ? "border-primary ring-2 ring-primary/30" : "border-border",
                 )}
               >
@@ -480,7 +488,9 @@ function TelaCliente() {
                         {formatarData(c.created_at)}
                       </span>
                     </div>
-                    <p className="mt-1 whitespace-pre-wrap text-sm">{c.texto}</p>
+                    <p className="mt-1 whitespace-pre-wrap text-sm font-medium text-foreground">
+                      {c.texto}
+                    </p>
 
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                       <Button
@@ -707,7 +717,7 @@ function TelaCliente() {
             Comentário geral
           </h2>
           {gerais.map((c) => (
-            <article key={c.id} className="rounded-2xl border bg-card p-3">
+            <article key={c.id} className="rounded-2xl border bg-muted/40 p-3">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold">
                   {c.autor_cliente_contato_id === data.contato.id

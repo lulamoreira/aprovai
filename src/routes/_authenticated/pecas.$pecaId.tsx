@@ -132,6 +132,13 @@ const SELO_CASO: Record<StatusCaso, { rotulo: string; classe: string }> = {
   revisada: { rotulo: "Revisada", classe: "bg-cyan/25 text-cyan-foreground" },
   aprovada: { rotulo: "Aprovada", classe: "bg-success/25 text-success-foreground" },
 };
+
+const CASO_FUNDO: Record<StatusCaso, string> = {
+  aberta: "bg-warning/15",
+  feita: "bg-info/15",
+  revisada: "bg-cyan/15",
+  aprovada: "bg-success/15",
+};
 interface Handoff {
   id: string;
   de_papel: string;
@@ -950,7 +957,10 @@ function TelaPeca() {
                   <article
                     key={c.id}
                     className={cn(
-                      "rounded-2xl border bg-background p-3",
+                      "rounded-2xl border p-3",
+                      c.eh_caso
+                        ? CASO_FUNDO[(c.status_caso as StatusCaso) ?? "aberta"]
+                        : "bg-muted/40",
                       c.eh_caso && "border-2 border-primary/40",
                     )}
                   >
@@ -977,7 +987,14 @@ function TelaPeca() {
                         {formatarData(c.created_at)}
                       </span>
                     </div>
-                    <p className="mt-1 whitespace-pre-wrap text-sm">{c.texto}</p>
+                    <p
+                      className={cn(
+                        "mt-1 whitespace-pre-wrap text-sm",
+                        c.eh_caso && "font-medium text-foreground",
+                      )}
+                    >
+                      {c.texto}
+                    </p>
                     {c.texto_original && c.texto_original !== c.texto && (
                       <p className="mt-1 text-xs text-muted-foreground line-through">
                         antes: {c.texto_original}

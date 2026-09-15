@@ -609,23 +609,31 @@ function TelaCliente() {
                           placeholder="Reescreva o que precisa mudar..."
                           className="min-h-20 rounded-xl"
                         />
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="rounded-xl"
-                            onClick={() => setEditando(null)}
-                          >
-                            Cancelar
-                          </Button>
-                          <Button
-                            size="sm"
-                            className="gradient-brand rounded-xl text-primary-foreground"
-                            disabled={!textoEdicao.trim() || editarCaso.isPending}
-                            onClick={() => editarCaso.mutate({ id: c.id, texto: textoEdicao })}
-                          >
-                            Salvar
-                          </Button>
+                        <div className="flex flex-col items-end gap-1">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="rounded-xl"
+                              onClick={() => setEditando(null)}
+                            >
+                              Cancelar
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="gradient-brand rounded-xl text-primary-foreground"
+                              disabled={!textoEdicao.trim() || editarCaso.isPending}
+                              title={!textoEdicao.trim() ? "Escreva algo primeiro." : undefined}
+                              onClick={() => editarCaso.mutate({ id: c.id, texto: textoEdicao })}
+                            >
+                              Salvar
+                            </Button>
+                          </div>
+                          {!textoEdicao.trim() && (
+                            <p className="text-xs font-medium text-muted-foreground">
+                              Escreva algo primeiro.
+                            </p>
+                          )}
                         </div>
                       </div>
                     )}
@@ -642,29 +650,37 @@ function TelaCliente() {
                           placeholder="O que ainda falta nesta marcação?"
                           className="min-h-20 rounded-xl"
                         />
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="rounded-xl"
-                            onClick={() => setCorrigindo(null)}
-                          >
-                            Cancelar
-                          </Button>
-                          <Button
-                            size="sm"
-                            className="gradient-brand rounded-xl text-primary-foreground"
-                            disabled={!textoCorrecao.trim() || pedirCorrecao.isPending}
-                            onClick={() =>
-                              pedirCorrecao.mutate({
-                                id: c.id,
-                                numero: i + 1,
-                                texto: textoCorrecao,
-                              })
-                            }
-                          >
-                            Enviar pedido
-                          </Button>
+                        <div className="flex flex-col items-end gap-1">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="rounded-xl"
+                              onClick={() => setCorrigindo(null)}
+                            >
+                              Cancelar
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="gradient-brand rounded-xl text-primary-foreground"
+                              disabled={!textoCorrecao.trim() || pedirCorrecao.isPending}
+                              title={!textoCorrecao.trim() ? "Escreva algo primeiro." : undefined}
+                              onClick={() =>
+                                pedirCorrecao.mutate({
+                                  id: c.id,
+                                  numero: i + 1,
+                                  texto: textoCorrecao,
+                                })
+                              }
+                            >
+                              Enviar pedido
+                            </Button>
+                          </div>
+                          {!textoCorrecao.trim() && (
+                            <p className="text-xs font-medium text-muted-foreground">
+                              Escreva algo primeiro.
+                            </p>
+                          )}
                         </div>
                       </div>
                     )}
@@ -696,16 +712,22 @@ function TelaCliente() {
                     Toque na arte para marcar o ponto
                   </span>
                 )}
-                <Button
-                  size="sm"
-                  className="gradient-brand rounded-xl text-primary-foreground"
-                  disabled={!texto.trim() || comentar.isPending}
-                  onClick={() =>
-                    comentar.mutate({ texto, ehCaso: true, comDesenho: true })
-                  }
-                >
-                  Criar marcação
-                </Button>
+                <div className="flex flex-col items-end gap-1">
+                  <Button
+                    size="sm"
+                    className="gradient-brand rounded-xl text-primary-foreground"
+                    disabled={!texto.trim() || comentar.isPending}
+                    title={!texto.trim() ? "Escreva algo primeiro." : undefined}
+                    onClick={() => comentar.mutate({ texto, ehCaso: true, comDesenho: true })}
+                  >
+                    Criar marcação
+                  </Button>
+                  {!texto.trim() && (
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Escreva algo primeiro.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -737,18 +759,24 @@ function TelaCliente() {
                 placeholder="Um recado geral para a agência (não vira marcação)..."
                 className="min-h-20 rounded-xl"
               />
-              <div className="flex justify-end">
+              <div className="flex flex-col items-end gap-1">
                 <Button
                   size="sm"
                   variant="outline"
                   className="rounded-xl"
                   disabled={!textoGeral.trim() || comentar.isPending}
+                  title={!textoGeral.trim() ? "Escreva algo primeiro." : undefined}
                   onClick={() =>
                     comentar.mutate({ texto: textoGeral, ehCaso: false, comDesenho: false })
                   }
                 >
                   Enviar comentário
                 </Button>
+                {!textoGeral.trim() && (
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Escreva algo primeiro.
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -842,17 +870,24 @@ function TelaCliente() {
                   </AlertDialogContent>
                 </AlertDialog>
               ) : (
-                <Button
-                  disabled
-                  className="flex-1 rounded-2xl"
-                  title={
-                    abertos.length > 0
-                      ? "Devolva seus pedidos para a agência corrigir."
-                      : "Decida cada marcação que voltou corrigida."
-                  }
-                >
-                  <CheckCircle2 className="mr-1 size-4" /> Aprovar tudo
-                </Button>
+                <div className="flex flex-1 flex-col gap-1">
+                  <Button
+                    disabled
+                    className="w-full rounded-2xl"
+                    title={
+                      abertos.length > 0
+                        ? "Há pedidos em aberto — use Devolver para correção."
+                        : "Decida cada marcação corrigida antes de aprovar."
+                    }
+                  >
+                    <CheckCircle2 className="mr-1 size-4" /> Aprovar tudo
+                  </Button>
+                  <p className="text-xs font-medium text-warning-foreground">
+                    {abertos.length > 0
+                      ? "Há pedidos em aberto — use “Devolver para correção”."
+                      : "Decida cada marcação corrigida antes de aprovar."}
+                  </p>
+                </div>
               )}
             </div>
           </div>

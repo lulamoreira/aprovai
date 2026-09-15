@@ -265,6 +265,8 @@ function TelaPeca() {
   /** Marcações do cliente nesta versão, cada uma com decisão própria. */
   const casos = comentariosVersao.filter((c) => c.eh_caso);
   const casosAbertos = casos.filter((c) => c.status_caso === "aberta");
+  /** Marcações que ainda não receberam o "Revisado ✓" do atendimento. */
+  const casosNaoRevisados = casos.filter((c) => c.status_caso !== "revisada");
   const ultimoHandoff = (data?.handoffs ?? []).find((h) => !h.recolhido_em) ?? null;
   const podeRecolher =
     !!ultimoHandoff &&
@@ -575,11 +577,22 @@ function TelaPeca() {
   /** Com correções ainda abertas, o atendimento devolve para a criação em vez de enviar. */
   const devolveParaCriacao =
     status === "aguardando_atendimento" && souAtendimento && casosAbertos.length > 0;
-  const travadoPelaCriacao = status === "criacao_ajustando" && casosAbertos.length > 0;
+  const semArte = status === "criacao_ajustando" && peca.versao_atual < 1;
+  const travadoPelaCriacao =
+    status === "criacao_ajustando" && (semArte || casosAbertos.length > 0);
+  /** Atendimento só envia ao cliente com TODAS as marcações revisadas. */
+  const faltaRevisar =
+    status === "aguardando_atendimento" &&
+    souAtendimento &&
+    casosAbertos.length === 0 &&
+    casosNaoRevisados.length > 0;
   const podeEnviar =
-    (status === "criacao_ajustando" && souCriacao && peca.versao_atual > 0) ||
+    (status === "criacao_ajustando" && souCriacao) ||
     ((status === "aguardando_atendimento" || status === "retorno_atendimento") && souAtendimento);
   const envioParaCliente = status === "aguardando_atendimento" && !devolveParaCriacao;
+  const motivoTravaCriacao = semArte
+    ? "Suba uma arte antes de enviar."
+    : "Marque todas as correções como feitas para enviar.";
 
   return (
     <div className="mx-auto max-w-[1500px] space-y-5">
@@ -669,15 +682,26 @@ function TelaPeca() {
           )}
 
           {rotuloEnvio && podeEnviar && envioParaCliente && (
-            <Button
-              className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
-              onClick={() => {
-                setContatosSelecionados(aprovadores.map((a) => a.id));
-                setModalContatos(true);
-              }}
-            >
-              <Send className="mr-1 size-4" /> {rotuloEnvio}
-            </Button>
+            <div className="flex flex-col items-end gap-1">
+              <Button
+                disabled={faltaRevisar}
+                title={
+                  faltaRevisar ? "Revise todas as marcações antes de enviar ao cliente." : undefined
+                }
+                className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
+                onClick={() => {
+                  setContatosSelecionados(aprovadores.map((a) => a.id));
+                  setModalContatos(true);
+                }}
+              >
+                <Send className="mr-1 size-4" /> {rotuloEnvio}
+              </Button>
+              {faltaRevisar && (
+                <p className="max-w-64 text-right text-xs font-medium text-warning-foreground">
+                  Revise todas as marcações (marque “Revisado ✓”) antes de enviar ao cliente.
+                </p>
+              )}
+            </div>
           )}
 
           {rotuloEnvio && podeEnviar && !envioParaCliente && !devolveParaCriacao && (
@@ -686,6 +710,7 @@ function TelaPeca() {
                 <AlertDialogTrigger asChild>
                   <Button
                     disabled={travadoPelaCriacao}
+                    title={travadoPelaCriacao ? motivoTravaCriacao : undefined}
                     className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
                   >
                     <Send className="mr-1 size-4" /> {rotuloEnvio}
@@ -711,8 +736,8 @@ function TelaPeca() {
                 </AlertDialogContent>
               </AlertDialog>
               {travadoPelaCriacao && (
-                <p className="text-xs font-medium text-warning-foreground">
-                  Marque todas as correções como feitas para enviar
+                <p className="max-w-64 text-right text-xs font-medium text-warning-foreground">
+                  {motivoTravaCriacao}
                 </p>
               )}
             </div>
@@ -1070,6 +1095,13 @@ function TelaPeca() {
                             revisado em {formatarData(c.revisado_em)}
                           </span>
                         )}
+                        <p className="w-full text-[11px] font-medium text-muted-foreground">
+                          {c.status_caso === "revisada"
+                            ? "Já está revisada — use “Não feito” se ainda faltar algo."
+                            : c.status_caso === "aberta"
+                              ? "Já está marcada como não feita — use “Revisado ✓” quando estiver ok."
+                              : "Marque “Revisado ✓” para liberar o envio ao cliente."}
+                        </p>
                       </div>
                     )}
 
@@ -1111,14 +1143,22 @@ function TelaPeca() {
                     ) : (
                       <span />
                     )}
-                    <Button
-                      size="sm"
-                      className="gradient-brand rounded-xl text-primary-foreground hover:opacity-95"
-                      disabled={!texto.trim() || comentar.isPending}
-                      onClick={() => comentar.mutate()}
-                    >
-                      Comentar
-                    </Button>
+                    <div className="flex flex-col items-end gap-1">
+                      <Button
+                        size="sm"
+                        className="gradient-brand rounded-xl text-primary-foreground hover:opacity-95"
+                        disabled={!texto.trim() || comentar.isPending}
+                        title={!texto.trim() ? "Escreva algo primeiro." : undefined}
+                        onClick={() => comentar.mutate()}
+                      >
+                        Comentar
+                      </Button>
+                      {!texto.trim() && (
+                        <p className="text-xs font-medium text-muted-foreground">
+                          Escreva algo primeiro.
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -1167,14 +1207,20 @@ function TelaPeca() {
             placeholder="Ex.: cliente pediu para corrigir o preço informado por engano."
             className="min-h-24 rounded-2xl"
           />
-          <DialogFooter>
+          <DialogFooter className="sm:flex-col sm:items-end sm:gap-1">
             <Button
               disabled={!motivo.trim() || autorizar.isPending}
+              title={!motivo.trim() ? "Escreva o motivo primeiro." : undefined}
               onClick={() => autorizar.mutate()}
               className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
             >
               Liberar edição
             </Button>
+            {!motivo.trim() && (
+              <p className="text-xs font-medium text-muted-foreground">
+                Escreva o motivo primeiro para liberar a edição.
+              </p>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1273,13 +1319,25 @@ function TelaPeca() {
             >
               Cancelar
             </Button>
-            <Button
-              disabled={contatosSelecionados.length === 0 || enviar.isPending}
-              onClick={() => enviar.mutate({ contatoIds: contatosSelecionados, modo: modoEnvio })}
-              className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
-            >
-              <Send className="mr-1 size-4" /> Enviar para o cliente
-            </Button>
+            <div className="flex flex-col items-end gap-1">
+              <Button
+                disabled={contatosSelecionados.length === 0 || enviar.isPending}
+                title={
+                  contatosSelecionados.length === 0
+                    ? "Selecione ao menos um aprovador."
+                    : undefined
+                }
+                onClick={() => enviar.mutate({ contatoIds: contatosSelecionados, modo: modoEnvio })}
+                className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
+              >
+                <Send className="mr-1 size-4" /> Enviar para o cliente
+              </Button>
+              {contatosSelecionados.length === 0 && (
+                <p className="text-xs font-medium text-warning-foreground">
+                  Marque ao menos um aprovador para enviar.
+                </p>
+              )}
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

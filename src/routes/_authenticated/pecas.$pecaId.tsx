@@ -630,6 +630,35 @@ function TelaPeca() {
             </Button>
           )}
 
+          {devolveParaCriacao && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95">
+                  <Undo2 className="mr-1 size-4" /> Voltar para a Criação
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="rounded-3xl">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Devolver para a Criação?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {casosAbertos.length} correç
+                    {casosAbertos.length === 1 ? "ão continua" : "ões continuam"} em aberto. A peça
+                    volta para a Criação ajustar.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel className="rounded-2xl">Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="rounded-2xl"
+                    onClick={() => devolverCriacao.mutate()}
+                  >
+                    Devolver
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+
           {rotuloEnvio && podeEnviar && envioParaCliente && (
             <Button
               className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
@@ -642,32 +671,42 @@ function TelaPeca() {
             </Button>
           )}
 
-          {rotuloEnvio && podeEnviar && !envioParaCliente && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95">
-                  <Send className="mr-1 size-4" /> {rotuloEnvio}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="rounded-3xl">
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Confirmar envio?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Depois que a outra parte visualizar, seus comentários desta rodada ficam
-                    bloqueados para edição.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel className="rounded-2xl">Cancelar</AlertDialogCancel>
-                  <AlertDialogAction
-                    className="rounded-2xl"
-                    onClick={() => enviar.mutate(undefined)}
+          {rotuloEnvio && podeEnviar && !envioParaCliente && !devolveParaCriacao && (
+            <div className="flex flex-col items-end gap-1">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    disabled={travadoPelaCriacao}
+                    className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
                   >
-                    Enviar
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                    <Send className="mr-1 size-4" /> {rotuloEnvio}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="rounded-3xl">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Confirmar envio?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Depois que a outra parte visualizar, seus comentários desta rodada ficam
+                      bloqueados para edição.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="rounded-2xl">Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="rounded-2xl"
+                      onClick={() => enviar.mutate(undefined)}
+                    >
+                      Enviar
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              {travadoPelaCriacao && (
+                <p className="text-xs font-medium text-warning-foreground">
+                  Marque todas as correções como feitas para enviar
+                </p>
+              )}
+            </div>
           )}
         </div>
       </div>

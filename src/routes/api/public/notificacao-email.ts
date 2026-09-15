@@ -28,8 +28,22 @@ function escaparHtml(valor: string): string {
     .replace(/"/g, "&quot;");
 }
 
-function montarHtml(opcoes: { titulo: string; mensagem: string | null; link: string | null }): string {
-  const { titulo, mensagem, link } = opcoes;
+function montarHtml(opcoes: {
+  titulo: string;
+  mensagem: string | null;
+  link: string | null;
+  pin?: string | null;
+}): string {
+  const { titulo, mensagem, link, pin } = opcoes;
+  const blocoPin = pin
+    ? `<tr><td style="padding:8px 32px 0 32px;">
+         <div style="background:#F2F0FF;border:1px solid #E1DCFF;border-radius:20px;padding:20px 24px;text-align:center;">
+           <p style="margin:0 0 8px 0;font-size:13px;color:#565463;">Seu código de aprovação</p>
+           <p style="margin:0;font-size:34px;font-weight:700;letter-spacing:8px;color:#7D2AE8;">${escaparHtml(pin)}</p>
+           <p style="margin:10px 0 0 0;font-size:12px;color:#6b6a78;">Use este código para abrir a peça. Não compartilhe com ninguém.</p>
+         </div>
+       </td></tr>`
+    : "";
   const botao = link
     ? `<tr><td style="padding:8px 32px 24px 32px;">
          <a href="${escaparHtml(link)}"

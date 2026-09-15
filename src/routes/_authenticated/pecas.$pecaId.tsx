@@ -710,6 +710,7 @@ function TelaPeca() {
                 <AlertDialogTrigger asChild>
                   <Button
                     disabled={travadoPelaCriacao}
+                    title={travadoPelaCriacao ? motivoTravaCriacao : undefined}
                     className="gradient-brand rounded-2xl text-primary-foreground hover:opacity-95"
                   >
                     <Send className="mr-1 size-4" /> {rotuloEnvio}

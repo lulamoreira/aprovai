@@ -101,6 +101,8 @@ interface Versao {
   largura_px: number | null;
   altura_px: number | null;
 }
+type StatusCaso = "aberta" | "feita" | "revisada" | "aprovada";
+
 interface Comentario {
   id: string;
   versao_id: string | null;
@@ -117,7 +119,19 @@ interface Comentario {
   edicao_autorizada: boolean;
   locked_em: string | null;
   created_at: string;
+  /** Marcação do cliente que vira um caso com status próprio. */
+  eh_caso: boolean | null;
+  status_caso: StatusCaso | null;
+  feito_em: string | null;
+  revisado_em: string | null;
 }
+
+const SELO_CASO: Record<StatusCaso, { rotulo: string; classe: string }> = {
+  aberta: { rotulo: "Aberta", classe: "bg-warning/25 text-warning-foreground" },
+  feita: { rotulo: "Ajuste feito", classe: "bg-info/25 text-info-foreground" },
+  revisada: { rotulo: "Revisada", classe: "bg-cyan/25 text-cyan-foreground" },
+  aprovada: { rotulo: "Aprovada", classe: "bg-success/25 text-success-foreground" },
+};
 interface Handoff {
   id: string;
   de_papel: string;

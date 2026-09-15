@@ -22,6 +22,7 @@ import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.
 import { Route as AuthenticatedCampanhasCampanhaIdRouteImport } from './routes/_authenticated/campanhas.$campanhaId'
 import { Route as AuthenticatedPecasIndexRouteImport } from './routes/_authenticated/pecas.index'
 import { Route as AuthenticatedPecasPecaIdRouteImport } from './routes/_authenticated/pecas.$pecaId'
+import { Route as ApiPublicArteClienteRouteImport } from './routes/api/public/arte-cliente'
 import { Route as ApiPublicNotificacaoEmailRouteImport } from './routes/api/public/notificacao-email'
 
 const IndexRoute = IndexRouteImport.update({
@@ -91,6 +92,11 @@ const AuthenticatedPecasPecaIdRoute =
     path: '/pecas/$pecaId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicArteClienteRoute = ApiPublicArteClienteRouteImport.update({
+  id: '/api/public/arte-cliente',
+  path: '/api/public/arte-cliente',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicNotificacaoEmailRoute =
   ApiPublicNotificacaoEmailRouteImport.update({
     id: '/api/public/notificacao-email',
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/campanhas/$campanhaId': typeof AuthenticatedCampanhasCampanhaIdRoute
   '/pecas/$pecaId': typeof AuthenticatedPecasPecaIdRoute
+  '/api/public/arte-cliente': typeof ApiPublicArteClienteRoute
   '/api/public/notificacao-email': typeof ApiPublicNotificacaoEmailRoute
   '/pecas/': typeof AuthenticatedPecasIndexRoute
 }
@@ -125,6 +132,7 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/campanhas/$campanhaId': typeof AuthenticatedCampanhasCampanhaIdRoute
   '/pecas/$pecaId': typeof AuthenticatedPecasPecaIdRoute
+  '/api/public/arte-cliente': typeof ApiPublicArteClienteRoute
   '/api/public/notificacao-email': typeof ApiPublicNotificacaoEmailRoute
   '/pecas': typeof AuthenticatedPecasIndexRoute
 }
@@ -142,6 +150,7 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/_authenticated/campanhas/$campanhaId': typeof AuthenticatedCampanhasCampanhaIdRoute
   '/_authenticated/pecas/$pecaId': typeof AuthenticatedPecasPecaIdRoute
+  '/api/public/arte-cliente': typeof ApiPublicArteClienteRoute
   '/api/public/notificacao-email': typeof ApiPublicNotificacaoEmailRoute
   '/_authenticated/pecas/': typeof AuthenticatedPecasIndexRoute
 }
@@ -159,6 +168,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/campanhas/$campanhaId'
     | '/pecas/$pecaId'
+    | '/api/public/arte-cliente'
     | '/api/public/notificacao-email'
     | '/pecas/'
   fileRoutesByTo: FileRoutesByTo
@@ -174,6 +184,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/campanhas/$campanhaId'
     | '/pecas/$pecaId'
+    | '/api/public/arte-cliente'
     | '/api/public/notificacao-email'
     | '/pecas'
   id:
@@ -190,6 +201,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/_authenticated/campanhas/$campanhaId'
     | '/_authenticated/pecas/$pecaId'
+    | '/api/public/arte-cliente'
     | '/api/public/notificacao-email'
     | '/_authenticated/pecas/'
   fileRoutesById: FileRoutesById
@@ -203,6 +215,7 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   AprovarTokenRoute: typeof AprovarTokenRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
+  ApiPublicArteClienteRoute: typeof ApiPublicArteClienteRoute
   ApiPublicNotificacaoEmailRoute: typeof ApiPublicNotificacaoEmailRoute
 }
 
@@ -299,6 +312,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPecasPecaIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/arte-cliente': {
+      id: '/api/public/arte-cliente'
+      path: '/api/public/arte-cliente'
+      fullPath: '/api/public/arte-cliente'
+      preLoaderRoute: typeof ApiPublicArteClienteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/notificacao-email': {
       id: '/api/public/notificacao-email'
       path: '/api/public/notificacao-email'
@@ -338,6 +358,7 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   AprovarTokenRoute: AprovarTokenRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
+  ApiPublicArteClienteRoute: ApiPublicArteClienteRoute,
   ApiPublicNotificacaoEmailRoute: ApiPublicNotificacaoEmailRoute,
 }
 export const routeTree = rootRouteImport

@@ -131,16 +131,32 @@ function TelaCliente() {
 
   const versaoAtual = data?.versoes.find((v) => v.numero === data.peca.versao_atual) ?? null;
 
+  const versaoAtualId = versaoAtual?.id ?? null;
+
   useEffect(() => {
-    if (!versaoAtual?.imagem_path) {
+    if (!versaoAtual?.imagem_path || !versaoAtualId) {
       setUrlImagem(null);
       return;
     }
-    const { data: publica } = supabase.storage
-      .from("peca-imagens")
-      .getPublicUrl(versaoAtual.imagem_path);
-    setUrlImagem(publica?.publicUrl ?? null);
-  }, [versaoAtual?.imagem_path]);
+    let ativo = true;
+    void (async () => {
+      try {
+        const resposta = await fetch("/api/public/arte-cliente", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, versao_id: versaoAtualId }),
+        });
+        if (!resposta.ok) throw new Error("falha ao abrir a arte");
+        const corpo = (await resposta.json()) as { url?: string };
+        if (ativo) setUrlImagem(corpo.url ?? null);
+      } catch {
+        if (ativo) setUrlImagem(null);
+      }
+    })();
+    return () => {
+      ativo = false;
+    };
+  }, [token, versaoAtualId, versaoAtual?.imagem_path]);
 
   function invalidar() {
     void qc.invalidateQueries({ queryKey: ["cliente", token] });

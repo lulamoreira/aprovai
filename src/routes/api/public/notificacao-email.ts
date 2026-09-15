@@ -66,6 +66,7 @@ function montarHtml(opcoes: {
       <h1 style="margin:0 0 12px 0;font-size:20px;line-height:1.3;color:#2D2B38;">${escaparHtml(titulo)}</h1>
       ${mensagem ? `<p style="margin:0;font-size:15px;line-height:1.6;color:#565463;">${escaparHtml(mensagem)}</p>` : ""}
     </td></tr>
+    ${blocoPin}
     ${botao}
     <tr><td style="padding:0 32px 28px 32px;">
       <p style="margin:0;font-size:12px;color:#9a98a6;border-top:1px solid #ECEBF3;padding-top:16px;">

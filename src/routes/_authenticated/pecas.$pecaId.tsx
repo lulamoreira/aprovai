@@ -563,10 +563,14 @@ function TelaPeca() {
         : status === "retorno_atendimento"
           ? "Enviar para Correção (Criação)"
           : null;
+  /** Com correções ainda abertas, o atendimento devolve para a criação em vez de enviar. */
+  const devolveParaCriacao =
+    status === "aguardando_atendimento" && souAtendimento && casosAbertos.length > 0;
+  const travadoPelaCriacao = status === "criacao_ajustando" && casosAbertos.length > 0;
   const podeEnviar =
     (status === "criacao_ajustando" && souCriacao && peca.versao_atual > 0) ||
     ((status === "aguardando_atendimento" || status === "retorno_atendimento") && souAtendimento);
-  const envioParaCliente = status === "aguardando_atendimento";
+  const envioParaCliente = status === "aguardando_atendimento" && !devolveParaCriacao;
 
   return (
     <div className="mx-auto max-w-[1500px] space-y-5">

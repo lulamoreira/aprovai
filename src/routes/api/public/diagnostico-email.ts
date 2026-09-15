@@ -11,7 +11,11 @@ import { createFileRoute } from "@tanstack/react-router";
 const PADRAO_FROM = "AprovAI <onboarding@resend.dev>";
 const PADRAO_APP_URL = "https://aprovai.lovable.app";
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
-const TIPOS_COM_ACESSO = ["pronta_aprovacao", "edicao_autorizada", "lembrete_aprovacao"];
+const TIPOS_COM_ACESSO = [
+  "pronta_aprovacao",
+  "edicao_autorizada",
+  "lembrete_aprovacao",
+] as const;
 
 interface Notificacao {
   id: string;

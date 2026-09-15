@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Eye, Loader2, MessageSquarePlus, Undo2 } from "lucide-react";
+import {
+  CheckCircle2,
+  Eye,
+  Loader2,
+  MessageSquarePlus,
+  Pencil,
+  Trash2,
+  Undo2,
+} from "lucide-react";
 import { LogoAprovAI } from "@/components/LogoAprovAI";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -89,9 +97,9 @@ interface RespostaCliente {
 }
 
 const SELO_CASO: Record<StatusCaso, { rotulo: string; classe: string }> = {
-  aberta: { rotulo: "Aberta", classe: "bg-warning/25 text-warning-foreground" },
-  feita: { rotulo: "Ajuste feito", classe: "bg-info/25 text-info-foreground" },
-  revisada: { rotulo: "Revisada", classe: "bg-cyan/25 text-cyan-foreground" },
+  aberta: { rotulo: "Pedido", classe: "bg-warning/25 text-warning-foreground" },
+  feita: { rotulo: "Em revisão na agência", classe: "bg-info/25 text-info-foreground" },
+  revisada: { rotulo: "Corrigida — confira", classe: "bg-cyan/25 text-cyan-foreground" },
   aprovada: { rotulo: "Aprovada", classe: "bg-success/25 text-success-foreground" },
 };
 
@@ -105,6 +113,8 @@ function TelaCliente() {
   const [emFoco, setEmFoco] = useState<string | null>(null);
   const [corrigindo, setCorrigindo] = useState<string | null>(null);
   const [textoCorrecao, setTextoCorrecao] = useState("");
+  const [editando, setEditando] = useState<string | null>(null);
+  const [textoEdicao, setTextoEdicao] = useState("");
   const anotador = useAnotador();
 
   const { data, isLoading, error } = useQuery({

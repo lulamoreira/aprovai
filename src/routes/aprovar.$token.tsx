@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Loader2, Undo2 } from "lucide-react";
+import { CheckCircle2, Eye, Loader2, MessageSquarePlus, Undo2 } from "lucide-react";
 import { LogoAprovAI } from "@/components/LogoAprovAI";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,6 +47,24 @@ export const Route = createFileRoute("/aprovar/$token")({
   component: TelaCliente,
 });
 
+type StatusCaso = "aberta" | "feita" | "revisada" | "aprovada";
+
+interface ComentarioCliente {
+  id: string;
+  versao_id: string | null;
+  autor_papel: "criacao" | "atendimento" | "cliente";
+  autor_cliente_contato_id: string | null;
+  texto: string;
+  pin_x: number | null;
+  pin_y: number | null;
+  anotacao_json: unknown;
+  editavel: boolean;
+  edicao_autorizada: boolean;
+  eh_caso: boolean | null;
+  status_caso: StatusCaso | null;
+  created_at: string;
+}
+
 interface RespostaCliente {
   contato: { id: string; nome: string | null };
   /** Situação deste aprovador na rodada atual. */
@@ -66,29 +84,27 @@ interface RespostaCliente {
     modo_aprovacao: string | null;
   };
   versoes: { id: string; numero: number; imagem_path: string | null }[];
-  comentarios: {
-    id: string;
-    versao_id: string | null;
-    autor_papel: "criacao" | "atendimento" | "cliente";
-    autor_cliente_contato_id: string | null;
-    texto: string;
-    pin_x: number | null;
-    pin_y: number | null;
-    anotacao_json: unknown;
-    editavel: boolean;
-    edicao_autorizada: boolean;
-    created_at: string;
-  }[];
+  comentarios: ComentarioCliente[];
   eventos: { tipo: string; ator_nome: string | null; created_at: string }[];
 }
+
+const SELO_CASO: Record<StatusCaso, { rotulo: string; classe: string }> = {
+  aberta: { rotulo: "Aberta", classe: "bg-warning/25 text-warning-foreground" },
+  feita: { rotulo: "Ajuste feito", classe: "bg-info/25 text-info-foreground" },
+  revisada: { rotulo: "Revisada", classe: "bg-cyan/25 text-cyan-foreground" },
+  aprovada: { rotulo: "Aprovada", classe: "bg-success/25 text-success-foreground" },
+};
 
 function TelaCliente() {
   const { token } = Route.useParams();
   const qc = useQueryClient();
   const [texto, setTexto] = useState("");
+  const [textoGeral, setTextoGeral] = useState("");
   const [pin, setPin] = useState<{ x: number; y: number } | null>(null);
   const [urlImagem, setUrlImagem] = useState<string | null>(null);
-  const [marcacaoVisivel, setMarcacaoVisivel] = useState<string | null>(null);
+  const [emFoco, setEmFoco] = useState<string | null>(null);
+  const [corrigindo, setCorrigindo] = useState<string | null>(null);
+  const [textoCorrecao, setTextoCorrecao] = useState("");
   const anotador = useAnotador();
 
   const { data, isLoading, error } = useQuery({
@@ -121,30 +137,53 @@ function TelaCliente() {
   }
 
   const comentar = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (entrada: { texto: string; ehCaso: boolean; comDesenho: boolean }) => {
       const { error: erro } = await supabase.rpc("cliente_comentar", {
         p_token: token,
-        p_texto: texto.trim(),
-        ...(pin ? { p_pin_x: pin.x, p_pin_y: pin.y } : {}),
-        ...(anotador.strokes.length > 0
+        p_texto: entrada.texto.trim(),
+        p_eh_caso: entrada.ehCaso,
+        ...(entrada.ehCaso && pin ? { p_pin_x: pin.x, p_pin_y: pin.y } : {}),
+        ...(entrada.comDesenho && anotador.strokes.length > 0
           ? { p_anotacao_json: anotacaoParaJson(anotador.strokes) }
           : {}),
       });
       if (erro) throw erro;
     },
-    onSuccess: () => {
-      setTexto("");
-      setPin(null);
-      anotador.limpar();
-      anotador.setDesenhando(false);
+    onSuccess: (_d, entrada) => {
+      if (entrada.ehCaso) {
+        setTexto("");
+        setPin(null);
+        anotador.limpar();
+        anotador.setDesenhando(false);
+      } else {
+        setTextoGeral("");
+        setCorrigindo(null);
+        setTextoCorrecao("");
+      }
       invalidar();
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const aprovar = useMutation({
+  const decidirCaso = useMutation({
+    mutationFn: async (entrada: { id: string; decisao: "aprovar" | "reabrir" }) => {
+      const { error: erro } = await supabase.rpc("cliente_decidir_caso", {
+        p_token: token,
+        p_comentario_id: entrada.id,
+        p_decisao: entrada.decisao,
+      });
+      if (erro) throw erro;
+    },
+    onSuccess: (_d, entrada) => {
+      toast.success(entrada.decisao === "aprovar" ? "Marcação aprovada." : "Marcação reaberta.");
+      invalidar();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const aprovarTudo = useMutation({
     mutationFn: async () => {
-      const { error: erro } = await supabase.rpc("cliente_aprovar", { p_token: token });
+      const { error: erro } = await supabase.rpc("cliente_aprovar_tudo", { p_token: token });
       if (erro) throw erro;
     },
     onSuccess: () => {
@@ -160,7 +199,7 @@ function TelaCliente() {
       if (erro) throw erro;
     },
     onSuccess: () => {
-      toast.success("Enviado para a agência com seus comentários.");
+      toast.success("Enviado para a agência com seus pedidos.");
       invalidar();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -191,24 +230,18 @@ function TelaCliente() {
   const jaRespondeu = !!data.acesso?.decisao;
   const aguardandoDemais = jaRespondeu && data.peca.status === "aguardando_cliente";
   const aberta = data.peca.status === "aguardando_cliente" && !jaRespondeu;
-  const pins = data.comentarios.filter(
-    (c) => c.versao_id === versaoAtual?.id && c.pin_x != null && c.pin_y != null,
-  );
-  /** Marcações do próprio aprovador nesta versão (salvas) ou desenho ainda não enviado. */
-  const tenhoMarcacao =
-    anotador.strokes.length > 0 ||
-    data.comentarios.some(
-      (c) =>
-        c.autor_cliente_contato_id === data.contato.id &&
-        (c.versao_id === versaoAtual?.id || (!versaoAtual && c.versao_id === null)),
-    );
-  const rotuloDevolver =
-    modo === "um"
-      ? "Voltar para o atendimento"
-      : "Aguardar o(s) outro(s) e enviar para o atendimento";
+
+  const daVersao = (c: ComentarioCliente) =>
+    versaoAtual ? c.versao_id === versaoAtual.id : c.versao_id === null;
+  const casos = data.comentarios.filter((c) => c.eh_caso && daVersao(c));
+  const gerais = data.comentarios.filter((c) => !c.eh_caso);
+  const abertos = casos.filter((c) => c.status_caso === "aberta");
+
+  const caso = casos.find((c) => c.id === emFoco) ?? null;
+  const strokesEmFoco = caso ? lerAnotacao(caso.anotacao_json) : [];
 
   return (
-    <div className="min-h-screen bg-background pb-28">
+    <div className="min-h-screen bg-background pb-36">
       <header className="gradient-brand px-5 py-6 text-primary-foreground">
         <div className="mx-auto flex max-w-3xl items-center gap-2">
           <LogoAprovAI tamanho={28} className="rounded-xl bg-white/20 [background-image:none]" />
@@ -239,6 +272,7 @@ function TelaCliente() {
               : "Todos os aprovadores precisam aprovar para a peça seguir."}
           </p>
         )}
+
         <section className="rounded-3xl border bg-card p-3 shadow-soft">
           {aberta && <BarraAnotacao estado={anotador} className="mb-3" />}
           <MolduraArte
@@ -249,79 +283,218 @@ function TelaCliente() {
             aoClicar={aberta ? (p: { x: number; y: number }) => setPin(p) : undefined}
             vazio={<p className="p-10 text-sm text-muted-foreground">Arte indisponível.</p>}
           >
-            {pins.map((c, i) => (
-              <span
-                key={c.id}
-                title={c.texto}
-                style={{ left: `${(c.pin_x ?? 0) * 100}%`, top: `${(c.pin_y ?? 0) * 100}%` }}
-                className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground"
-              >
-                {i + 1}
-              </span>
-            ))}
+            {casos.map((c, i) =>
+              c.pin_x != null && c.pin_y != null ? (
+                <button
+                  key={c.id}
+                  type="button"
+                  title={c.texto}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEmFoco((atual) => (atual === c.id ? null : c.id));
+                  }}
+                  style={{ left: `${c.pin_x * 100}%`, top: `${c.pin_y * 100}%` }}
+                  className={cn(
+                    "absolute -translate-x-1/2 -translate-y-1/2 rounded-full px-2 py-0.5 text-xs font-bold shadow-soft ring-2 transition",
+                    c.status_caso === "aprovada"
+                      ? "bg-success text-success-foreground ring-success"
+                      : "bg-primary text-primary-foreground ring-primary",
+                    emFoco === c.id && "scale-125 ring-4 ring-cyan",
+                  )}
+                >
+                  {i + 1}
+                </button>
+              ) : null,
+            )}
             {pin && (
               <span
                 style={{ left: `${pin.x * 100}%`, top: `${pin.y * 100}%` }}
                 className="absolute size-4 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-cyan ring-2 ring-primary"
               />
             )}
-            {marcacaoVisivel && (
-              <AnotacaoView
-                strokes={lerAnotacao(
-                  data.comentarios.find((c) => c.id === marcacaoVisivel)?.anotacao_json,
-                )}
-              />
-            )}
+            {strokesEmFoco.length > 0 && <AnotacaoView strokes={strokesEmFoco} />}
             {aberta && <CamadaAnotacao estado={anotador} />}
           </MolduraArte>
           {aberta && (
             <p className="px-2 pt-2 text-xs text-muted-foreground">
               {anotador.desenhando
-                ? "Rabisque sobre a arte. O desenho vai junto com o seu comentário."
-                : "Toque na arte para marcar exatamente o ponto do seu comentário."}
+                ? "Rabisque sobre a arte. O desenho vai junto com a sua marcação."
+                : "Toque na arte para marcar exatamente o ponto e escreva o que precisa mudar."}
             </p>
           )}
         </section>
 
+        {/* Marcações */}
         <section className="space-y-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Conversa
-          </h2>
-          {data.comentarios.length === 0 && (
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Marcações
+            </h2>
+            {casos.length > 0 && (
+              <span className="text-xs font-medium text-muted-foreground">
+                {casos.length - abertos.length} de {casos.length} aprovadas
+              </span>
+            )}
+          </div>
+
+          {casos.length === 0 && (
             <p className="rounded-2xl border border-dashed p-6 text-center text-sm text-muted-foreground">
-              Nenhum comentário ainda.
+              Nenhuma marcação ainda. Se estiver tudo certo, use “Aprovar tudo”.
             </p>
           )}
-          {data.comentarios.map((c) => (
-            <article key={c.id} className="rounded-2xl border bg-card p-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold">{PAPEL_LABEL[c.autor_papel]}</p>
-                <span className="text-xs text-muted-foreground">{formatarData(c.created_at)}</span>
-              </div>
-              <p className="mt-1 whitespace-pre-wrap text-sm">{c.texto}</p>
-              {c.edicao_autorizada && c.editavel && (
-                <p className="mt-1 text-xs text-warning-foreground">
-                  A agência liberou você para editar este pedido.
-                </p>
-              )}
-              {lerAnotacao(c.anotacao_json).length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setMarcacaoVisivel((atual) => (atual === c.id ? null : c.id))}
-                  className="mt-2 inline-flex items-center rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/25"
-                >
-                  {marcacaoVisivel === c.id ? "ocultar marcação" : "ver marcação"}
-                </button>
-              )}
-            </article>
-          ))}
+
+          {casos.map((c, i) => {
+            const selo = SELO_CASO[c.status_caso ?? "aberta"];
+            const meu = c.autor_cliente_contato_id === data.contato.id;
+            return (
+              <article
+                key={c.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => setEmFoco((atual) => (atual === c.id ? null : c.id))}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ")
+                    setEmFoco((atual) => (atual === c.id ? null : c.id));
+                }}
+                className={cn(
+                  "cursor-pointer rounded-3xl border-2 bg-card p-4 shadow-soft transition",
+                  emFoco === c.id ? "border-primary ring-2 ring-primary/30" : "border-border",
+                )}
+              >
+                <div className="flex items-start gap-3">
+                  <span
+                    className={cn(
+                      "flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-extrabold",
+                      c.status_caso === "aprovada"
+                        ? "bg-success text-success-foreground"
+                        : "gradient-brand text-primary-foreground",
+                    )}
+                  >
+                    {i + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-semibold">
+                        {meu ? "Você" : PAPEL_LABEL[c.autor_papel]}
+                      </p>
+                      <span
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                          selo.classe,
+                        )}
+                      >
+                        {selo.rotulo}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatarData(c.created_at)}
+                      </span>
+                    </div>
+                    <p className="mt-1 whitespace-pre-wrap text-sm">{c.texto}</p>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={emFoco === c.id ? "default" : "outline"}
+                        className={cn(
+                          "rounded-xl",
+                          emFoco === c.id && "gradient-brand text-primary-foreground",
+                        )}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEmFoco((atual) => (atual === c.id ? null : c.id));
+                        }}
+                      >
+                        <Eye className="mr-1 size-4" />
+                        {emFoco === c.id ? "Ocultar na arte" : "Ver na arte"}
+                      </Button>
+
+                      {aberta && (
+                        <>
+                          {c.status_caso !== "aprovada" && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              className="rounded-xl bg-success text-success-foreground hover:opacity-90"
+                              disabled={decidirCaso.isPending}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                decidirCaso.mutate({ id: c.id, decisao: "aprovar" });
+                              }}
+                            >
+                              <CheckCircle2 className="mr-1 size-4" /> Aprovar
+                            </Button>
+                          )}
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="rounded-xl"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCorrigindo((atual) => (atual === c.id ? null : c.id));
+                              setTextoCorrecao("");
+                              if (c.status_caso === "aprovada")
+                                decidirCaso.mutate({ id: c.id, decisao: "reabrir" });
+                            }}
+                          >
+                            <MessageSquarePlus className="mr-1 size-4" /> Pedir correção
+                          </Button>
+                        </>
+                      )}
+                    </div>
+
+                    {aberta && corrigindo === c.id && (
+                      <div
+                        className="mt-3 space-y-2 rounded-2xl bg-muted/50 p-3"
+                        onClick={(e) => e.stopPropagation()}
+                        role="presentation"
+                      >
+                        <Textarea
+                          value={textoCorrecao}
+                          onChange={(e) => setTextoCorrecao(e.target.value)}
+                          placeholder="O que ainda falta nesta marcação?"
+                          className="min-h-20 rounded-xl"
+                        />
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="rounded-xl"
+                            onClick={() => setCorrigindo(null)}
+                          >
+                            Cancelar
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="gradient-brand rounded-xl text-primary-foreground"
+                            disabled={!textoCorrecao.trim() || comentar.isPending}
+                            onClick={() =>
+                              comentar.mutate({
+                                texto: `Sobre a marcação ${i + 1}: ${textoCorrecao.trim()}`,
+                                ehCaso: false,
+                                comDesenho: false,
+                              })
+                            }
+                          >
+                            Enviar pedido
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </article>
+            );
+          })}
 
           {aberta && (
-            <div className="space-y-2 rounded-2xl border bg-card p-3">
+            <div className="space-y-2 rounded-3xl border-2 border-dashed border-primary/40 bg-card p-3">
+              <p className="text-sm font-semibold">Nova marcação</p>
               <Textarea
                 value={texto}
                 onChange={(e) => setTexto(e.target.value)}
-                placeholder={pin ? "O que mudar neste ponto?" : "Escreva um comentário..."}
+                placeholder={pin ? "O que mudar neste ponto?" : "Escreva o que precisa mudar..."}
                 className="min-h-24 rounded-xl"
               />
               <div className="flex items-center justify-between">
@@ -330,19 +503,65 @@ function TelaCliente() {
                     onClick={() => setPin(null)}
                     className="text-xs text-muted-foreground hover:underline"
                   >
-                    remover marcação
+                    remover ponto marcado
                   </button>
                 ) : (
-                  <span />
+                  <span className="text-xs text-muted-foreground">
+                    Toque na arte para marcar o ponto
+                  </span>
                 )}
                 <Button
                   size="sm"
-                  className="rounded-xl"
-                  variant="outline"
+                  className="gradient-brand rounded-xl text-primary-foreground"
                   disabled={!texto.trim() || comentar.isPending}
-                  onClick={() => comentar.mutate()}
+                  onClick={() =>
+                    comentar.mutate({ texto, ehCaso: true, comDesenho: true })
+                  }
                 >
-                  Adicionar comentário
+                  Criar marcação
+                </Button>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* Comentário geral */}
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Comentário geral
+          </h2>
+          {gerais.map((c) => (
+            <article key={c.id} className="rounded-2xl border bg-card p-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold">
+                  {c.autor_cliente_contato_id === data.contato.id
+                    ? "Você"
+                    : PAPEL_LABEL[c.autor_papel]}
+                </p>
+                <span className="text-xs text-muted-foreground">{formatarData(c.created_at)}</span>
+              </div>
+              <p className="mt-1 whitespace-pre-wrap text-sm">{c.texto}</p>
+            </article>
+          ))}
+          {aberta && (
+            <div className="space-y-2 rounded-2xl border bg-card p-3">
+              <Textarea
+                value={textoGeral}
+                onChange={(e) => setTextoGeral(e.target.value)}
+                placeholder="Um recado geral para a agência (não vira marcação)..."
+                className="min-h-20 rounded-xl"
+              />
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="rounded-xl"
+                  disabled={!textoGeral.trim() || comentar.isPending}
+                  onClick={() =>
+                    comentar.mutate({ texto: textoGeral, ehCaso: false, comDesenho: false })
+                  }
+                >
+                  Enviar comentário
                 </Button>
               </div>
             </div>
@@ -370,60 +589,66 @@ function TelaCliente() {
 
       {aberta && (
         <div className="fixed inset-x-0 bottom-0 border-t bg-card/95 p-4 backdrop-blur">
-          <div className="mx-auto flex max-w-3xl gap-3">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant={tenhoMarcacao ? "default" : "outline"}
-                  className={cn(
-                    "flex-1 rounded-2xl",
-                    tenhoMarcacao && "gradient-brand text-primary-foreground hover:opacity-95",
-                  )}
-                >
-                  <Undo2 className="mr-1 size-4" />{" "}
-                  {tenhoMarcacao ? rotuloDevolver : "Devolver com comentários"}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="rounded-3xl">
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Enviar para o atendimento?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Seus comentários vão para a agência e ficam bloqueados para edição depois que
-                    forem lidos.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel className="rounded-2xl">Cancelar</AlertDialogCancel>
-                  <AlertDialogAction className="rounded-2xl" onClick={() => devolver.mutate()}>
-                    Enviar
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+          <div className="mx-auto max-w-3xl space-y-2">
+            {abertos.length > 0 && (
+              <p className="text-center text-xs font-medium text-warning-foreground">
+                Faltam decidir {abertos.length} marcaç{abertos.length === 1 ? "ão" : "ões"} (
+                {abertos.map((c) => `#${casos.indexOf(c) + 1}`).join(", ")}).
+              </p>
+            )}
+            <div className="flex gap-3">
+              {abertos.length > 0 && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" className="flex-1 rounded-2xl">
+                      <Undo2 className="mr-1 size-4" /> Devolver para correção
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="rounded-3xl">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Enviar para o atendimento?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Suas marcações vão para a agência e ficam bloqueadas para edição depois que
+                        forem lidas.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="rounded-2xl">Cancelar</AlertDialogCancel>
+                      <AlertDialogAction className="rounded-2xl" onClick={() => devolver.mutate()}>
+                        Enviar
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
 
-            {!tenhoMarcacao && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button className="gradient-brand flex-1 rounded-2xl text-primary-foreground hover:opacity-95">
-                    <CheckCircle2 className="mr-1 size-4" /> Aprovar peça
+                    <CheckCircle2 className="mr-1 size-4" /> Aprovar tudo
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent className="rounded-3xl">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Aprovar esta peça?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      A aprovação é definitiva e libera a peça para produção.
+                      {abertos.length > 0
+                        ? `Todas as ${abertos.length} marcações abertas serão dadas como aprovadas e a peça segue para produção. A aprovação é definitiva.`
+                        : "A aprovação é definitiva e libera a peça para produção."}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel className="rounded-2xl">Cancelar</AlertDialogCancel>
-                    <AlertDialogAction className="rounded-2xl" onClick={() => aprovar.mutate()}>
+                    <AlertDialogAction
+                      className="rounded-2xl"
+                      onClick={() => aprovarTudo.mutate()}
+                    >
                       Aprovar
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-            )}
+            </div>
           </div>
         </div>
       )}

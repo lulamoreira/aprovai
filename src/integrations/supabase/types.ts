@@ -761,6 +761,10 @@ export type Database = {
         Args: { p_comentario_id: string; p_texto: string; p_token: string }
         Returns: undefined
       }
+      cliente_remover_caso: {
+        Args: { p_comentario_id: string; p_token: string }
+        Returns: undefined
+      }
       cobrar_aprovador: {
         Args: { p_cliente_contato_id: string; p_peca_id: string }
         Returns: undefined

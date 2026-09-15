@@ -88,7 +88,7 @@ async function miniaturaComprimida(
       el.crossOrigin = "anonymous";
       el.onload = () => resolve(el);
       el.onerror = () => reject(new Error("falha ao carregar imagem"));
-      el.src = data.publicUrl;
+      el.src = data.signedUrl;
     });
 
     const escala = Math.min(1, LADO_MAX / Math.max(img.naturalWidth, img.naturalHeight));

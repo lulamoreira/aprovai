@@ -987,14 +987,9 @@ function TelaPeca() {
                         {formatarData(c.created_at)}
                       </span>
                     </div>
-                    <p
-                      className={cn(
-                        "mt-1 whitespace-pre-wrap text-sm",
-                        c.eh_caso && "font-medium text-foreground",
-                      )}
-                    >
+                    <div className="mt-2 whitespace-pre-wrap rounded-xl border border-border bg-card p-3 text-sm font-medium text-card-foreground shadow-soft">
                       {c.texto}
-                    </p>
+                    </div>
                     {c.texto_original && c.texto_original !== c.texto && (
                       <p className="mt-1 text-xs text-muted-foreground line-through">
                         antes: {c.texto_original}

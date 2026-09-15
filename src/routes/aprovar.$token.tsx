@@ -609,23 +609,31 @@ function TelaCliente() {
                           placeholder="Reescreva o que precisa mudar..."
                           className="min-h-20 rounded-xl"
                         />
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="rounded-xl"
-                            onClick={() => setEditando(null)}
-                          >
-                            Cancelar
-                          </Button>
-                          <Button
-                            size="sm"
-                            className="gradient-brand rounded-xl text-primary-foreground"
-                            disabled={!textoEdicao.trim() || editarCaso.isPending}
-                            onClick={() => editarCaso.mutate({ id: c.id, texto: textoEdicao })}
-                          >
-                            Salvar
-                          </Button>
+                        <div className="flex flex-col items-end gap-1">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="rounded-xl"
+                              onClick={() => setEditando(null)}
+                            >
+                              Cancelar
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="gradient-brand rounded-xl text-primary-foreground"
+                              disabled={!textoEdicao.trim() || editarCaso.isPending}
+                              title={!textoEdicao.trim() ? "Escreva algo primeiro." : undefined}
+                              onClick={() => editarCaso.mutate({ id: c.id, texto: textoEdicao })}
+                            >
+                              Salvar
+                            </Button>
+                          </div>
+                          {!textoEdicao.trim() && (
+                            <p className="text-xs font-medium text-muted-foreground">
+                              Escreva algo primeiro.
+                            </p>
+                          )}
                         </div>
                       </div>
                     )}

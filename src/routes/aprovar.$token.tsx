@@ -124,17 +124,25 @@ function TelaCliente() {
   const [textoEdicao, setTextoEdicao] = useState("");
   const anotador = useAnotador();
 
+  // Prévia do administrador: abre em modo leitura, sem código e sem marcar como visto.
+  const ehPrevia =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("preview") === "1";
+
   const { data, isLoading, error } = useQuery({
-    queryKey: ["cliente", token],
+    queryKey: ["cliente", token, ehPrevia ? "previa" : "normal"],
     retry: false,
     queryFn: async () => {
-      const { data: resposta, error: erro } = await supabase.rpc("cliente_abrir", {
-        p_token: token,
-      });
+      const { data: resposta, error: erro } = ehPrevia
+        ? await supabase.rpc("cliente_previa", { p_token: token })
+        : await supabase.rpc("cliente_abrir", { p_token: token });
       if (erro) throw erro;
       return resposta as unknown as RespostaCliente;
     },
   });
+
+  const precisaCodigo =
+    !ehPrevia && !!error && /[Cc]ódigo de aprovação necessário/.test(error.message);
 
   const versaoAtual = data?.versoes.find((v) => v.numero === data.peca.versao_atual) ?? null;
 

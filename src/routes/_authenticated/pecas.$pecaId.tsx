@@ -248,6 +248,9 @@ function TelaPeca() {
     (c) => c.versao_id === versaoAtiva?.id,
   );
   const pins = comentariosVersao.filter((c) => c.pin_x != null && c.pin_y != null);
+  /** Marcações do cliente nesta versão, cada uma com decisão própria. */
+  const casos = comentariosVersao.filter((c) => c.eh_caso);
+  const casosAbertos = casos.filter((c) => c.status_caso === "aberta");
   const ultimoHandoff = (data?.handoffs ?? []).find((h) => !h.recolhido_em) ?? null;
   const podeRecolher =
     !!ultimoHandoff &&

@@ -908,3 +908,106 @@ function TelaCliente() {
     </div>
   );
 }
+
+interface RespostaPin {
+  ok: boolean;
+  tentativas_restantes?: number;
+  bloqueado?: boolean;
+}
+
+/** Tela de código: só o dono do e-mail consegue abrir a peça. */
+function PedirCodigo({ token }: { token: string }) {
+  const qc = useQueryClient();
+  const [codigo, setCodigo] = useState("");
+  const [restantes, setRestantes] = useState<number | null>(null);
+  const [bloqueado, setBloqueado] = useState(false);
+
+  const validar = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.rpc("cliente_validar_pin", {
+        p_token: token,
+        p_pin: codigo,
+      });
+      if (error) throw error;
+      return data as unknown as RespostaPin;
+    },
+    onSuccess: (r) => {
+      if (r.ok) {
+        void qc.invalidateQueries({ queryKey: ["cliente", token] });
+        return;
+      }
+      setBloqueado(!!r.bloqueado);
+      setRestantes(r.tentativas_restantes ?? 0);
+      setCodigo("");
+      toast.error(
+        r.bloqueado
+          ? "Muitas tentativas. Peça um novo link à agência."
+          : "Código incorreto. Confira o e-mail e tente novamente.",
+      );
+    },
+    onError: (e: Error) => {
+      if (/bloqueado/i.test(e.message)) setBloqueado(true);
+      toast.error(e.message);
+    },
+  });
+
+  const completo = /^\d{6}$/.test(codigo);
+
+  return (
+    <div className="flex min-h-screen items-center justify-center px-6 py-10">
+      <div className="w-full max-w-sm rounded-3xl border bg-card p-7 text-center shadow-sm">
+        <div className="mb-4 flex justify-center">
+          <LogoAprovAI />
+        </div>
+        <h1 className="text-xl font-bold">Código de aprovação</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Digite o código de 6 dígitos que enviamos no seu e-mail.
+        </p>
+
+        <Input
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          maxLength={6}
+          disabled={bloqueado}
+          value={codigo}
+          onChange={(e) => setCodigo(e.target.value.replace(/\D/g, "").slice(0, 6))}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && completo && !bloqueado) validar.mutate();
+          }}
+          placeholder="000000"
+          className="mt-6 h-14 rounded-2xl text-center text-2xl font-bold tracking-[0.5em]"
+        />
+
+        <Button
+          className="gradient-brand mt-4 h-12 w-full rounded-2xl text-primary-foreground hover:opacity-95"
+          disabled={!completo || bloqueado || validar.isPending}
+          onClick={() => validar.mutate()}
+        >
+          {validar.isPending ? <Loader2 className="size-4 animate-spin" /> : "Abrir a peça"}
+        </Button>
+
+        {bloqueado ? (
+          <p className="mt-3 text-sm font-medium text-destructive">
+            Muitas tentativas. Peça um novo link à agência.
+          </p>
+        ) : !completo ? (
+          <p className="mt-3 text-xs text-muted-foreground">
+            Digite os 6 dígitos para liberar o botão.
+          </p>
+        ) : null}
+
+        {restantes !== null && !bloqueado && (
+          <p className="mt-2 text-sm text-warning-foreground">
+            Código incorreto — {restantes}{" "}
+            {restantes === 1 ? "tentativa restante" : "tentativas restantes"}.
+          </p>
+        )}
+
+        <p className="mt-6 border-t pt-4 text-xs text-muted-foreground">
+          Não recebeu o código? Confira o spam ou peça ao atendimento da agência para reenviar o
+          link de aprovação.
+        </p>
+      </div>
+    </div>
+  );
+}

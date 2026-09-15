@@ -28,8 +28,22 @@ function escaparHtml(valor: string): string {
     .replace(/"/g, "&quot;");
 }
 
-function montarHtml(opcoes: { titulo: string; mensagem: string | null; link: string | null }): string {
-  const { titulo, mensagem, link } = opcoes;
+function montarHtml(opcoes: {
+  titulo: string;
+  mensagem: string | null;
+  link: string | null;
+  pin?: string | null;
+}): string {
+  const { titulo, mensagem, link, pin } = opcoes;
+  const blocoPin = pin
+    ? `<tr><td style="padding:8px 32px 0 32px;">
+         <div style="background:#F2F0FF;border:1px solid #E1DCFF;border-radius:20px;padding:20px 24px;text-align:center;">
+           <p style="margin:0 0 8px 0;font-size:13px;color:#565463;">Seu código de aprovação</p>
+           <p style="margin:0;font-size:34px;font-weight:700;letter-spacing:8px;color:#7D2AE8;">${escaparHtml(pin)}</p>
+           <p style="margin:10px 0 0 0;font-size:12px;color:#6b6a78;">Use este código para abrir a peça. Não compartilhe com ninguém.</p>
+         </div>
+       </td></tr>`
+    : "";
   const botao = link
     ? `<tr><td style="padding:8px 32px 24px 32px;">
          <a href="${escaparHtml(link)}"
@@ -52,6 +66,7 @@ function montarHtml(opcoes: { titulo: string; mensagem: string | null; link: str
       <h1 style="margin:0 0 12px 0;font-size:20px;line-height:1.3;color:#2D2B38;">${escaparHtml(titulo)}</h1>
       ${mensagem ? `<p style="margin:0;font-size:15px;line-height:1.6;color:#565463;">${escaparHtml(mensagem)}</p>` : ""}
     </td></tr>
+    ${blocoPin}
     ${botao}
     <tr><td style="padding:0 32px 28px 32px;">
       <p style="margin:0;font-size:12px;color:#9a98a6;border-top:1px solid #ECEBF3;padding-top:16px;">
@@ -104,7 +119,10 @@ async function processar(notificacaoId: string): Promise<void> {
   const appUrl = (process.env["APP_URL"] ?? PADRAO_APP_URL).replace(/\/+$/, "");
   let link: string | null = null;
 
+  let pin: string | null = null;
+
   const tiposComAcesso = ["pronta_aprovacao", "edicao_autorizada", "lembrete_aprovacao"];
+  const tiposComPin = ["pronta_aprovacao", "lembrete_aprovacao"];
   if (
     tiposComAcesso.includes(notificacao.tipo) &&
     notificacao.peca_id &&
@@ -112,13 +130,28 @@ async function processar(notificacaoId: string): Promise<void> {
   ) {
     const { data: acesso } = await supabaseAdmin
       .from("acessos_cliente")
-      .select("token, criado_em")
+      .select("id, token, criado_em")
       .eq("peca_id", notificacao.peca_id)
       .eq("cliente_contato_id", notificacao.destinatario_cliente_contato_id)
       .order("criado_em", { ascending: false })
       .limit(1)
       .maybeSingle();
     if (acesso?.token) link = `${appUrl}/aprovar/${acesso.token}`;
+
+    // Gera um código de 6 dígitos e guarda apenas o hash; o código vai só no e-mail.
+    if (acesso?.id && tiposComPin.includes(notificacao.tipo)) {
+      const aleatorio = crypto.getRandomValues(new Uint32Array(1))[0] ?? 0;
+      const codigo = String(aleatorio % 1_000_000).padStart(6, "0");
+      const { error: erroPin } = await supabaseAdmin.rpc("registrar_pin_acesso", {
+        p_acesso_id: acesso.id,
+        p_pin: codigo,
+      });
+      if (erroPin) {
+        console.error("[enviar-email] falha ao registrar o código", erroPin.message);
+      } else {
+        pin = codigo;
+      }
+    }
   }
 
   const lovableApiKey = process.env["LOVABLE_API_KEY"];
@@ -139,7 +172,12 @@ async function processar(notificacaoId: string): Promise<void> {
       from: process.env["FROM_EMAIL"] ?? PADRAO_FROM,
       to: [email],
       subject: notificacao.titulo,
-      html: montarHtml({ titulo: notificacao.titulo, mensagem: notificacao.mensagem, link }),
+      html: montarHtml({
+        titulo: notificacao.titulo,
+        mensagem: notificacao.mensagem,
+        link,
+        pin,
+      }),
     }),
   });
 

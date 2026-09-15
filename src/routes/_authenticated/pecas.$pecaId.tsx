@@ -777,7 +777,19 @@ function TelaPeca() {
                         {contato?.email ?? "—"} · válido até {formatarValidade(a.expira_em)}
                       </p>
                     </div>
-                    <div className="flex shrink-0 gap-2">
+                    <div className="flex shrink-0 flex-wrap gap-2">
+                      {temPapel("admin") && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="rounded-xl"
+                          onClick={() =>
+                            window.open(`${linkAprovacao(a.token)}?preview=1`, "_blank", "noopener")
+                          }
+                        >
+                          <Eye className="mr-1 size-4" /> Ver prévia
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"

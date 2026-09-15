@@ -863,6 +863,10 @@ export type Database = {
         Returns: Database["public"]["Enums"]["papel_ator"]
       }
       recolher_envio: { Args: { p_peca_id: string }; Returns: undefined }
+      registrar_pin_acesso: {
+        Args: { p_acesso_id: string; p_pin: string }
+        Returns: undefined
+      }
       revogar_autorizacao: {
         Args: { p_autorizacao_id: string }
         Returns: undefined

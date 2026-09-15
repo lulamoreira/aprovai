@@ -642,29 +642,37 @@ function TelaCliente() {
                           placeholder="O que ainda falta nesta marcação?"
                           className="min-h-20 rounded-xl"
                         />
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="rounded-xl"
-                            onClick={() => setCorrigindo(null)}
-                          >
-                            Cancelar
-                          </Button>
-                          <Button
-                            size="sm"
-                            className="gradient-brand rounded-xl text-primary-foreground"
-                            disabled={!textoCorrecao.trim() || pedirCorrecao.isPending}
-                            onClick={() =>
-                              pedirCorrecao.mutate({
-                                id: c.id,
-                                numero: i + 1,
-                                texto: textoCorrecao,
-                              })
-                            }
-                          >
-                            Enviar pedido
-                          </Button>
+                        <div className="flex flex-col items-end gap-1">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="rounded-xl"
+                              onClick={() => setCorrigindo(null)}
+                            >
+                              Cancelar
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="gradient-brand rounded-xl text-primary-foreground"
+                              disabled={!textoCorrecao.trim() || pedirCorrecao.isPending}
+                              title={!textoCorrecao.trim() ? "Escreva algo primeiro." : undefined}
+                              onClick={() =>
+                                pedirCorrecao.mutate({
+                                  id: c.id,
+                                  numero: i + 1,
+                                  texto: textoCorrecao,
+                                })
+                              }
+                            >
+                              Enviar pedido
+                            </Button>
+                          </div>
+                          {!textoCorrecao.trim() && (
+                            <p className="text-xs font-medium text-muted-foreground">
+                              Escreva algo primeiro.
+                            </p>
+                          )}
                         </div>
                       </div>
                     )}

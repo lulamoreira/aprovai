@@ -317,6 +317,39 @@ function TelaPeca() {
     (a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime(),
   );
 
+  const { data: cobrancas = [] } = useQuery({
+    queryKey: ["cobrancas", pecaId],
+    enabled: status === "aguardando_cliente" && souAtendimento,
+    queryFn: async () => {
+      const linhas = await buscarTudo<Cobranca>(() =>
+        supabase
+          .from("cobrancas")
+          .select("id, cliente_contato_id, cobrado_por, criado_em")
+          .eq("peca_id", pecaId)
+          .order("criado_em", { ascending: false })
+          .order("id"),
+      );
+      const ids = Array.from(
+        new Set(linhas.map((c) => c.cobrado_por).filter((v): v is string => !!v)),
+      );
+      if (ids.length === 0) return linhas;
+      const { data: perfis } = await supabase
+        .from("profiles")
+        .select("id, nome, email")
+        .in("id", ids);
+      const mapa = new Map((perfis ?? []).map((p) => [p.id, p.nome ?? p.email ?? "Equipe"]));
+      return linhas.map((c) => ({
+        ...c,
+        nome_cobrador: c.cobrado_por ? (mapa.get(c.cobrado_por) ?? null) : null,
+      }));
+    },
+  });
+
+  /** Cobranças de um aprovador, da mais recente para a mais antiga. */
+  function cobrancasDe(contatoId: string): Cobranca[] {
+    return cobrancas.filter((c) => c.cliente_contato_id === contatoId);
+  }
+
   /** Rodada atual = handoff do acesso mais recente; cai para os acessos recentes se for antigo. */
   const handoffRodada = acessosRecentes[0]?.handoff_id ?? null;
   const rodada = handoffRodada

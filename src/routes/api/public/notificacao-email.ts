@@ -172,7 +172,12 @@ async function processar(notificacaoId: string): Promise<void> {
       from: process.env["FROM_EMAIL"] ?? PADRAO_FROM,
       to: [email],
       subject: notificacao.titulo,
-      html: montarHtml({ titulo: notificacao.titulo, mensagem: notificacao.mensagem, link }),
+      html: montarHtml({
+        titulo: notificacao.titulo,
+        mensagem: notificacao.mensagem,
+        link,
+        pin,
+      }),
     }),
   });
 

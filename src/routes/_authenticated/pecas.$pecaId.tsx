@@ -957,7 +957,10 @@ function TelaPeca() {
                   <article
                     key={c.id}
                     className={cn(
-                      "rounded-2xl border bg-background p-3",
+                      "rounded-2xl border p-3",
+                      c.eh_caso
+                        ? CASO_FUNDO[(c.status_caso as StatusCaso) ?? "aberta"]
+                        : "bg-muted/40",
                       c.eh_caso && "border-2 border-primary/40",
                     )}
                   >

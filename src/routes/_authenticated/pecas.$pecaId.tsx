@@ -736,8 +736,8 @@ function TelaPeca() {
                 </AlertDialogContent>
               </AlertDialog>
               {travadoPelaCriacao && (
-                <p className="text-xs font-medium text-warning-foreground">
-                  Marque todas as correções como feitas para enviar
+                <p className="max-w-64 text-right text-xs font-medium text-warning-foreground">
+                  {motivoTravaCriacao}
                 </p>
               )}
             </div>

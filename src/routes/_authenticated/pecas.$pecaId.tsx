@@ -121,7 +121,7 @@ interface Comentario {
   created_at: string;
   /** Marcação do cliente que vira um caso com status próprio. */
   eh_caso: boolean | null;
-  status_caso: StatusCaso | null;
+  status_caso: string | null;
   feito_em: string | null;
   revisado_em: string | null;
 }

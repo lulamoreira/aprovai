@@ -455,7 +455,8 @@ function TelaCliente() {
                     setEmFoco((atual) => (atual === c.id ? null : c.id));
                 }}
                 className={cn(
-                  "cursor-pointer rounded-3xl border-2 bg-card p-4 shadow-soft transition",
+                  "cursor-pointer rounded-3xl border-2 p-4 shadow-soft transition",
+                  CASO_FUNDO[c.status_caso ?? "aberta"],
                   emFoco === c.id ? "border-primary ring-2 ring-primary/30" : "border-border",
                 )}
               >

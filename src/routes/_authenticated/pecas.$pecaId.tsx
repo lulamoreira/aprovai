@@ -203,7 +203,7 @@ function TelaPeca() {
         supabase
           .from("comentarios")
           .select(
-            "id, versao_id, handoff_id, autor_user_id, autor_papel, texto, texto_original, pin_x, pin_y, anotacao_json, visivel_para_cliente, editavel, edicao_autorizada, locked_em, created_at",
+            "id, versao_id, handoff_id, autor_user_id, autor_papel, texto, texto_original, pin_x, pin_y, anotacao_json, visivel_para_cliente, editavel, edicao_autorizada, locked_em, created_at, eh_caso, status_caso, feito_em, revisado_em",
           )
           .eq("peca_id", pecaId)
           .order("created_at", { ascending: true })

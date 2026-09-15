@@ -307,6 +307,10 @@ function TelaCliente() {
   const casos = data.comentarios.filter((c) => c.eh_caso && daVersao(c));
   const gerais = data.comentarios.filter((c) => !c.eh_caso);
   const abertos = casos.filter((c) => c.status_caso === "aberta");
+  /** Marcações que voltaram corrigidas e ainda esperam a decisão do cliente. */
+  const aDecidir = casos.filter((c) => c.status_caso !== "aberta" && c.status_caso !== "aprovada");
+  const aprovadas = casos.filter((c) => c.status_caso === "aprovada");
+  const podeAprovarTudo = abertos.length === 0 && aDecidir.length === 0;
 
   const caso = casos.find((c) => c.id === emFoco) ?? null;
   const strokesEmFoco = caso ? lerAnotacao(caso.anotacao_json) : [];
@@ -403,7 +407,7 @@ function TelaCliente() {
             </h2>
             {casos.length > 0 && (
               <span className="text-xs font-medium text-muted-foreground">
-                {casos.length - abertos.length} de {casos.length} aprovadas
+                {aprovadas.length} de {casos.length} aprovadas
               </span>
             )}
           </div>
